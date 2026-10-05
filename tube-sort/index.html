@@ -1,0 +1,1854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tube Sort</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#dfe8ea; --ink:#1f2a33; --muted:#5b6b75;
+  --glass:rgba(236,246,248,.45); --glass-edge:rgba(40,60,70,.35);
+  --btn:#ffffff; --accent:#2f6f8f; --cork:#b07a4a; --hid:#5d6a74; --hi:.6;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17212a; --ink:#e7eef2; --muted:#9fb0bb;
+    --glass:rgba(255,255,255,.08); --glass-edge:rgba(200,225,235,.35);
+    --btn:#26343f; --accent:#7cc3e0; --cork:#9c6b40; --hid:#3b4954; --hi:.28;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17212a; --ink:#e7eef2; --muted:#9fb0bb;
+  --glass:rgba(255,255,255,.08); --glass-edge:rgba(200,225,235,.35);
+  --btn:#26343f; --accent:#7cc3e0; --cork:#9c6b40; --hid:#3b4954; --hi:.28;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);overscroll-behavior:none;overflow:hidden}
+body{
+  margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:'Fredoka',ui-rounded,'Segoe UI',system-ui,sans-serif;
+  display:flex;flex-direction:column;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+  overscroll-behavior:none;overflow:hidden;touch-action:manipulation;
+}
+header{
+  display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 12px;
+  padding:14px 18px 4px;max-width:900px;width:100%;margin:0 auto;
+}
+h1{font-size:1.6rem;font-weight:600;margin:0}
+.stats{display:flex;gap:14px;align-items:baseline;color:var(--muted);font-size:1rem;flex-wrap:wrap}
+@media (max-width: 400px){ header h1{font-size:1.35rem} .stats{font-size:.9rem;gap:10px} #who{max-width:7em} }
+#who{font:inherit;font-size:.95rem;color:var(--accent);background:none;border:0;padding:4px 2px;cursor:pointer;
+  max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:32px}
+#who:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+.overlay.start{background:var(--bg)}
+.startcard{max-width:360px;display:flex;flex-direction:column;gap:12px;text-align:left;
+  box-shadow:0 12px 30px -12px rgba(0,0,0,.35)}
+.startcard h2{text-align:center;font-size:2rem;margin:0}
+.startcard .sub{text-align:center;margin:0}
+.plist{display:flex;flex-direction:column;gap:8px;max-height:40vh;overflow-y:auto;overscroll-behavior:contain}
+.prow{display:flex;gap:8px}
+.pbtn{flex:1;display:flex;justify-content:space-between;align-items:center;gap:10px;font:inherit;font-size:1.05rem;
+  min-height:48px;padding:8px 16px;border-radius:14px;border:2px solid var(--glass-edge);background:var(--bg);
+  color:var(--ink);cursor:pointer;text-align:left;min-width:0}
+.pbtn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbtn small{color:var(--muted);font-size:.85rem;white-space:nowrap}
+.pbtn:focus-visible,.pdel:focus-visible,#nameInput:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.pdel{font:inherit;min-width:48px;border-radius:14px;border:2px solid var(--glass-edge);background:none;color:var(--muted);cursor:pointer}
+.pdel.confirm{border-color:#c0392b;color:#c0392b;min-width:84px;font-size:.9rem}
+.newp{display:flex;gap:8px}
+#nameInput{flex:1;min-width:0;font:inherit;font-size:1.05rem;padding:10px 14px;min-height:48px;border-radius:14px;
+  border:2px solid var(--glass-edge);background:var(--bg);color:var(--ink);user-select:text;-webkit-user-select:text}
+#startBtn{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:1.05rem;cursor:pointer;
+  padding:6px 2px;min-height:44px}
+.switch input{appearance:none;-webkit-appearance:none;width:52px;height:30px;border-radius:999px;margin:0;
+  background:var(--glass-edge);position:relative;cursor:pointer;transition:background .2s;flex:none}
+.switch input::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(22px)}
+.switch input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.startcard .err{color:#c0392b;font-size:.9rem;margin:-4px 0 0;min-height:1em}
+#lvl{color:var(--ink);font-weight:600}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 12px;min-height:0;overflow:hidden}
+.rows{display:flex;flex-direction:column;gap:var(--rowgap);align-items:center}
+.row{display:flex;gap:var(--gap);justify-content:center}
+.slot{
+  background:none;border:0;padding:var(--lift) 0 0;margin:0;cursor:pointer;
+  border-radius:12px;font:inherit;color:inherit;
+}
+.slot:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.tube{
+  position:relative;width:var(--tw);height:var(--th);
+  border:2px solid var(--glass-edge);border-top:0;
+  border-radius:2px 2px calc(var(--tw) / 2) calc(var(--tw) / 2);
+  display:flex;flex-direction:column-reverse;align-items:center;
+  padding:4px 0 6px;
+  /* glass body: brighter at both curved edges, clear in the middle */
+  background:
+    linear-gradient(90deg,
+      rgba(255,255,255,calc(var(--hi) * .9)) 0%,
+      rgba(255,255,255,calc(var(--hi) * .15)) 18%,
+      rgba(255,255,255,0) 45%,
+      rgba(255,255,255,calc(var(--hi) * .12)) 80%,
+      rgba(255,255,255,calc(var(--hi) * .7)) 100%),
+    var(--glass);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,calc(var(--hi) * .5)),
+    inset -4px 0 6px -2px rgba(0,0,0,.10),
+    inset 4px 0 6px -2px rgba(0,0,0,.06),
+    0 10px 12px -8px rgba(0,0,0,.35);
+  transition:border-color .3s;
+}
+/* rolled glass lip at the mouth */
+.tube::before{
+  content:'';position:absolute;top:-5px;left:-6px;right:-6px;height:8px;z-index:3;
+  border-radius:5px;border:1px solid var(--glass-edge);
+  background:linear-gradient(180deg,
+    rgba(255,255,255,calc(var(--hi) * 1.4)) 0%,
+    rgba(255,255,255,calc(var(--hi) * .3)) 55%,
+    var(--glass-edge) 100%);
+  box-shadow:0 2px 3px -1px rgba(0,0,0,.2);
+  transition:border-color .3s;
+}
+/* reflections on the front of the glass, drawn over the balls */
+.tube::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+  background:
+    linear-gradient(90deg,
+      transparent 11%,
+      rgba(255,255,255,calc(var(--hi) * 1.1)) 15%,
+      rgba(255,255,255,calc(var(--hi) * .35)) 21%,
+      transparent 28%,
+      transparent 76%,
+      rgba(255,255,255,calc(var(--hi) * .45)) 81%,
+      transparent 85%),
+    radial-gradient(ellipse 60% 22% at 50% 96%, rgba(255,255,255,calc(var(--hi) * .6)), transparent 70%);
+}
+.tube.done{border-color:var(--accent)}
+.tube.done::before{border-color:var(--accent);background:linear-gradient(180deg,
+    rgba(255,255,255,calc(var(--hi) * 1.2)) 0%, var(--accent) 100%)}
+.cork{
+  position:absolute;left:14%;right:14%;
+  top:calc(var(--b) * -0.5 - 3px);height:calc(var(--b) * 0.55);
+  z-index:4;border-radius:4px 4px 2px 2px;
+  background:linear-gradient(90deg, rgba(0,0,0,.18), rgba(255,255,255,.18) 35%, rgba(0,0,0,.12)), var(--cork);
+  box-shadow:0 2px 2px rgba(0,0,0,.25);
+  animation:cork .35s cubic-bezier(.3,1.4,.5,1);
+}
+@keyframes cork{from{transform:translateY(calc(var(--b) * -0.8));opacity:0}to{transform:none;opacity:1}}
+.ball{
+  width:var(--b);height:var(--b);border-radius:50%;flex:none;
+  --dk:color-mix(in srgb, var(--c) 55%, #000);
+  --lt:color-mix(in srgb, var(--c) 70%, #fff);
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255,255,255,.95) 0 5%, rgba(255,255,255,.45) 11%, rgba(255,255,255,0) 24%),
+    radial-gradient(circle at 62% 86%, rgba(255,255,255,.28) 0, rgba(255,255,255,0) 30%),
+    radial-gradient(circle at 40% 35%, var(--lt) 0, var(--c) 38%, var(--dk) 100%);
+  box-shadow:0 3px 4px -1px rgba(0,0,0,.35), inset 0 -2px 3px rgba(0,0,0,.15);
+  transition:transform .2s cubic-bezier(.3,1.35,.5,1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--b) * .42);line-height:1;color:rgba(0,0,0,.55);
+}
+.ball .sym{display:none}
+body.symbols .ball .sym{display:block}
+.ball.hidden{
+  color:rgba(255,255,255,.85);font-weight:600;text-shadow:0 1px 1px rgba(0,0,0,.4);
+}
+.ball.hidden .sym{display:none}
+.ball .q{display:none}
+.ball.hidden .q{display:block}
+.ball.lift{transform:translateY(var(--up))}
+.ball.ghost{visibility:hidden}
+.ball.fly{position:fixed;left:0;top:0;z-index:50;pointer-events:none;transition:none;margin:0}
+.ball.land{animation:land .22s ease-out}
+@keyframes land{0%{transform:scale(1.14,.84) translateY(8%)}60%{transform:scale(.96,1.04)}100%{transform:none}}
+.ball.reveal{animation:reveal .4s ease-out}
+@keyframes reveal{0%{transform:scaleX(0)}100%{transform:none}}
+.slot.shake .tube{animation:shake .3s}
+.slot.hint-target .tube{animation:hintGlow 1s ease-in-out infinite}
+@keyframes hintGlow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 4px var(--accent), 0 0 18px 2px var(--accent)}}
+.ctl.nudge{animation:nudge 1.2s ease-in-out 3}
+@keyframes nudge{0%,100%{transform:none;border-color:var(--glass-edge)}50%{transform:scale(1.08);border-color:var(--accent)}}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+nav{display:flex;gap:6px 8px;justify-content:center;flex-wrap:wrap;padding:8px 10px 16px;max-width:520px;margin:0 auto}
+.ctl{
+  font:inherit;font-size:.95rem;padding:8px 14px;min-height:44px;border-radius:999px;
+  border:2px solid var(--glass-edge);background:var(--btn);color:var(--ink);cursor:pointer;
+}
+.ctl:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ctl:disabled{opacity:.4;cursor:default}
+.ctl[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.toast{
+  position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);
+  transform:translate(-50%,-10px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:14px;
+  max-width:min(90vw,380px);text-align:center;font-size:1rem;
+  transition:opacity .3s, transform .3s;z-index:60;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{
+  position:fixed;inset:0;background:rgba(10,20,28,.45);
+  display:flex;align-items:center;justify-content:center;padding:20px;z-index:70;
+}
+.overlay[hidden]{display:none}
+.card{background:var(--btn);border-radius:20px;padding:26px 28px;text-align:center;max-width:320px;width:100%}
+.card h2{margin:0 0 6px;font-size:1.5rem;font-weight:600}
+.card p{margin:0 0 18px;color:var(--muted)}
+.picker{max-width:440px;max-height:min(80vh,640px);display:flex;flex-direction:column;padding:20px 18px}
+.picker .grid{overscroll-behavior:contain;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;overflow-y:auto;padding:4px 2px 8px;margin:0 0 14px}
+.picker .sec{grid-column:1 / -1;text-align:left;color:var(--muted);font-size:.9rem;margin:8px 0 0}
+.lv{font:inherit;font-size:1rem;min-height:44px;border-radius:12px;border:2px solid var(--glass-edge);
+  background:var(--bg);color:var(--ink);cursor:pointer;position:relative;padding:0}
+.lv:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.lv.solved{border-color:var(--accent)}
+.lv.solved::after{content:'✓';position:absolute;top:1px;right:5px;font-size:.7rem;color:var(--accent)}
+.lv.current{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.lv:disabled{opacity:.35;cursor:default}
+.picker .note{margin:0 0 12px;font-size:.9rem}
+#next{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+.rotate{
+  display:none;position:fixed;inset:0;z-index:90;background:var(--bg);color:var(--ink);
+  flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;
+}
+.rotate .icon{font-size:3rem;display:inline-block;animation:turn 1.8s ease-in-out infinite}
+@keyframes turn{0%,30%{transform:rotate(90deg)}60%,100%{transform:rotate(0)}}
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse){
+  .rotate{display:flex}
+}
+/* ---------- holiday theme ---------- */
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;display:none}
+body.holiday #snow{display:block}
+header,main,nav{position:relative;z-index:1}
+body.holiday{
+  --bg:#0d1828; --ink:#eef3f8; --muted:#a8b8ca; --btn:#1a2a40; --accent:#d9ae44;
+  --glass:rgba(220,235,255,.07); --glass-edge:rgba(210,228,248,.42); --hid:#8b1e2b; --hi:.3;
+  background:radial-gradient(ellipse 120% 70% at 50% 0%, #1c3355 0%, #0d1828 60%, #080f1a 100%) fixed;
+}
+body.holiday #next, body.holiday #startBtn{color:#1a1206}
+body.holiday .ball{
+  width:calc(var(--b) * .84);height:calc(var(--b) * .84);margin-top:calc(var(--b) * .16);position:relative;
+  --pat:linear-gradient(transparent,transparent);
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255,255,255,.95) 0 5%, rgba(255,255,255,.4) 11%, rgba(255,255,255,0) 24%),
+    var(--pat),
+    radial-gradient(circle at 62% 86%, rgba(255,255,255,.25) 0, rgba(255,255,255,0) 30%),
+    radial-gradient(circle at 40% 35%, var(--lt) 0, var(--c) 40%, var(--dk) 100%);
+}
+/* the flying ornament floats above the page; it must never take up room in the layout */
+body.holiday .ball.fly{position:fixed;margin:0}
+body.holiday .ball::before{ /* gold cap */
+  content:'';position:absolute;left:50%;top:calc(var(--b) * -.1);width:30%;height:calc(var(--b) * .12);
+  transform:translateX(-50%);border-radius:2px 2px 1px 1px;
+  background:linear-gradient(90deg,#7d5f18,#f4d67f 40%,#b88f2c 72%,#6b5114);box-shadow:0 1px 1px rgba(0,0,0,.35);
+}
+body.holiday .ball::after{ /* hanging loop */
+  content:'';position:absolute;left:50%;top:calc(var(--b) * -.17);width:14%;height:calc(var(--b) * .09);
+  transform:translateX(-50%);border:1.5px solid #e6c463;border-bottom:0;border-radius:50% 50% 0 0;
+}
+/* a different pattern on each color, which also helps tell them apart */
+body.holiday .ball.c0{--pat:linear-gradient(180deg,transparent 43%,rgba(246,212,120,.9) 43% 57%,transparent 57%)}
+body.holiday .ball.c1{--pat:repeating-linear-gradient(45deg,rgba(255,255,255,.3) 0 12%,transparent 12% 24%)}
+body.holiday .ball.c2{--pat:radial-gradient(circle,rgba(255,255,255,.6) 0 11%,transparent 13%) 0 0/34% 34%}
+body.holiday .ball.c3{--pat:repeating-linear-gradient(90deg,rgba(255,255,255,.26) 0 10%,transparent 10% 25%)}
+body.holiday .ball.c4{--pat:linear-gradient(180deg,transparent 28%,rgba(255,255,255,.6) 28% 34%,transparent 34% 66%,rgba(255,255,255,.6) 66% 72%,transparent 72%)}
+body.holiday .ball.c5{--pat:radial-gradient(circle,rgba(255,255,255,.75) 0 7%,transparent 9%) 0 0/25% 25%}
+body.holiday .ball.c6{--pat:radial-gradient(circle,rgba(246,212,120,.85) 0 10%,transparent 12%) 0 0/33% 33%}
+body.holiday .ball.c7{--pat:repeating-linear-gradient(-45deg,rgba(246,212,120,.45) 0 9%,transparent 9% 22%)}
+body.holiday .ball.c8{--pat:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,255,255,.28) 0 15deg,transparent 15deg 30deg)}
+body.holiday .ball.c9{--pat:repeating-linear-gradient(180deg,rgba(246,212,120,.55) 0 6%,transparent 6% 19%)}
+body.holiday .ball.c10{--pat:radial-gradient(circle,rgba(255,255,255,.85) 0 5%,transparent 7%) 0 0/19% 19%}
+body.holiday .ball.c11{--pat:repeating-linear-gradient(135deg,rgba(214,40,52,.75) 0 10%,transparent 10% 22%)}
+/* hidden balls become wrapped presents */
+body.holiday .ball.hidden{
+  border-radius:14%;
+  background:
+    linear-gradient(90deg,transparent 42%,#e8c35e 42% 58%,transparent 58%),
+    linear-gradient(180deg,transparent 42%,#e8c35e 42% 58%,transparent 58%),
+    linear-gradient(135deg,#b3202e,#7a1420);
+  box-shadow:0 3px 4px -1px rgba(0,0,0,.45), inset 0 -2px 3px rgba(0,0,0,.25);
+}
+body.holiday .ball.hidden::before{
+  top:calc(var(--b) * -.08);width:44%;height:calc(var(--b) * .14);border-radius:50% 50% 40% 40%;
+  background:radial-gradient(circle at 30% 50%,#f4d67f 0 30%,transparent 32%),radial-gradient(circle at 70% 50%,#f4d67f 0 30%,transparent 32%),radial-gradient(circle,#c99a2e 0 22%,transparent 24%);
+  box-shadow:none;
+}
+body.holiday .ball.hidden::after{display:none}
+body.holiday .ball.hidden .q{display:none}
+body.holiday .bow{
+  position:absolute;left:-18%;right:-18%;top:calc(var(--b) * -.72);z-index:4;
+  animation:cork .45s cubic-bezier(.3,1.4,.5,1);filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));
+}
+body.holiday .bow svg{display:block;width:100%;height:auto}
+body.holiday .tube.done{border-color:var(--accent)}
+body.holiday nav{
+  background:linear-gradient(180deg, rgba(8,15,26,0) 0, #080f1a 16px);
+  margin-bottom:calc(env(safe-area-inset-bottom, 0px) * -1);
+  padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+  max-width:none;
+}
+body.holiday .ctl:disabled{opacity:1;color:#5d6d80;border-color:rgba(210,228,248,.18);background:#131f30}
+@media (prefers-reduced-motion: reduce){
+  body.holiday #snow{display:none}
+
+  .ball,.ball.land,.ball.reveal,.cork,.slot.shake .tube,.toast{transition:none;animation:none}
+}
+</style>
+<!-- Grandkid Games: which grandkid is playing, passed in from the game menu as ?player=Name -->
+<script>
+var GK_PLAYER = (function () { try { var q = new URLSearchParams(location.search); return (q.get('player') || '').trim().slice(0, 14); } catch (e) { return ''; } })();
+// Save keys get the grandkid's name in front, so every grandkid has separate progress.
+function gkKey(k) { return GK_PLAYER ? 'gk:' + GK_PLAYER.toLowerCase() + ':' + k : k; }
+// A button back to the game menu. Only shown when the game was opened from the menu.
+function gkHomeLink(extraClass) {
+  if (!GK_PLAYER) return null;
+  var a = document.createElement('a');
+  a.href = '../index.html?player=' + encodeURIComponent(GK_PLAYER);
+  a.className = 'gk-home' + (extraClass ? ' ' + extraClass : '');
+  a.textContent = '\u{1F3E0} All games';
+  return a;
+}
+</script>
+<style>
+.gk-home{display:inline-flex;align-items:center;justify-content:center;gap:.4em;min-height:44px;padding:.55em 1.2em;margin:14px auto 0;border-radius:999px;
+  background:#fff;color:#2a2340;border:3px solid #2a2340;box-shadow:0 4px 0 #2a2340;font:inherit;font-weight:700;font-size:1rem;line-height:1;text-decoration:none;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.gk-home:active{transform:translateY(3px);box-shadow:0 1px 0 #2a2340}
+</style>
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="bowGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8e08e"/><stop offset=".55" stop-color="#d6a93a"/><stop offset="1" stop-color="#96701e"/>
+    </linearGradient>
+  </defs>
+</svg>
+<header>
+  <h1>Tube Sort</h1>
+  <div class="stats"><button id="who" aria-label="Switch player">👤</button><span id="lvl">Level 1</span><span id="moves">0 moves</span></div>
+</header>
+<main id="board" aria-label="Game board"></main>
+<nav>
+  <button class="ctl" id="undo">Undo</button>
+  <button class="ctl" id="hint">Hint</button>
+  <button class="ctl" id="restart">Restart</button>
+  <button class="ctl" id="extra">Add tube</button>
+  <button class="ctl" id="levels">Levels</button>
+  <button class="ctl" id="settings">⚙︎ Settings</button>
+</nav>
+<div class="rotate" aria-live="polite"><span class="icon" aria-hidden="true">📱</span><p>Turn your phone upright to play.</p></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="overlay" id="win" hidden>
+  <div class="card" role="dialog" aria-labelledby="winTitle">
+    <h2 id="winTitle">Solved</h2>
+    <p id="winText"></p>
+    <button class="ctl" id="next">Next level</button>
+  </div>
+</div>
+<div class="overlay start" id="start">
+  <div class="card startcard" role="dialog" aria-labelledby="startTitle">
+    <h2 id="startTitle">Tube Sort</h2>
+    <p class="sub" id="startSub">Who's playing?</p>
+    <div class="plist" id="plist"></div>
+    <div class="newp">
+      <input id="nameInput" type="text" maxlength="20" placeholder="Your name" autocomplete="off" enterkeyhint="go" aria-label="Your name">
+      <button class="ctl" id="startBtn">Play</button>
+    </div>
+    <p class="err" id="startErr" aria-live="polite"></p>
+    <p class="err" id="saveWarn" hidden style="color:var(--muted);margin-top:-8px">This browser isn't saving progress, so names and levels will be lost when the game closes. This usually means Private Browsing is on, or cookies and website data are blocked in the phone's settings.</p>
+    <label class="switch">Music <input type="checkbox" id="musicToggle" role="switch"></label>
+    <label class="switch">Sound effects <input type="checkbox" id="soundsToggle" role="switch"></label>
+  </div>
+</div>
+<div class="overlay" id="set" hidden>
+  <div class="card startcard" role="dialog" aria-labelledby="setTitle">
+    <h2 id="setTitle" style="font-size:1.5rem">Settings</h2>
+    <label class="switch">Music <input type="checkbox" id="optMusic" role="switch"></label>
+    <label class="switch">Sound effects <input type="checkbox" id="optSounds" role="switch"></label>
+    <label class="switch">Vibration <input type="checkbox" id="optVibe" role="switch"></label>
+    <label class="switch">Symbols on balls <input type="checkbox" id="optSymbols" role="switch"></label>
+    <label class="switch">Holiday theme <input type="checkbox" id="optHoliday" role="switch"></label>
+    <button class="ctl" id="setWho">Switch player</button>
+    <button class="ctl" id="setClose" style="background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600">Done</button>
+  </div>
+</div>
+<div class="overlay" id="pick" hidden>
+  <div class="card picker" role="dialog" aria-labelledby="pickTitle">
+    <h2 id="pickTitle">Choose a level</h2>
+    <p class="note" id="pickNote"></p>
+    <div class="grid" id="pickGrid"></div>
+    <button class="ctl" id="pickClose">Close</button>
+  </div>
+</div>
+<script>
+// ---- puzzle logic ----
+const COLORS = [
+  ['#E63946','▲'],['#F4A261','■'],['#F9D74C','●'],['#8AC926','◆'],
+  ['#2A9D8F','★'],['#4CC9F0','✚'],['#3A5BD9','♥'],['#7B2CBF','✖'],
+  ['#FF70A6','⬢'],['#8D5A3B','☾'],['#9AA5B1','♣'],['#F5F5F0','♠']
+];
+const MAX_LEVEL = 300;
+
+function rng(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// Difficulty curve for 300 levels.
+//  1-45:    4-ball tubes, one new color every 4 levels (3 colors up to 12 by level 37).
+//  46-100:  5-ball tubes, restart at 9 colors and climb back to 12 by level 61.
+//  51+:     hidden balls, from about 20% of buried balls up to all of them by level 90.
+//  81+:     no extra tube.
+//  101-150: 6-ball tubes, restart at 9 colors and climb back to 12 by level 125.
+//  151-200: 6-ball tubes, 12 colors, tougher shuffles.
+//  201-250: 7-ball tubes, restart at 10 colors and climb back to 12 by level 225.
+//  251-300: 7-ball tubes, 12 colors, the toughest shuffles.
+//  Levels 1-100 pick the most scrambled of several shuffles; from 101 on, the
+//  game picks the shuffle that takes its solver the most work to untangle,
+//  choosing from more candidates as levels rise.
+//  301+:    bonus levels at maximum difficulty.
+// Levels 1-100 are generated exactly as before, so nobody's saved levels change.
+function params(level){
+  const l = Math.min(level, 100);
+  let colors, cap;
+  if (l <= 45){ cap = 4; colors = Math.min(12, 3 + Math.floor((l - 1) / 4)); }
+  else { cap = 5; colors = Math.min(12, 9 + Math.floor((l - 46) / 5)); }
+  const hide = l < 51 ? 0 : Math.min(1, 0.2 + (l - 51) * 0.8 / 39);
+  const candidates = Math.min(12, 1 + Math.floor(l / 8));
+  return { colors, cap, empty: 2, hide, candidates, extra: l <= 80 };
+}
+
+const uniform = t => t.every(x => x === t[0]);
+const isWon = (s, cap) => s.every(t => t.length === 0 || (t.length === cap && uniform(t)));
+const topRun = a => { const c = a[a.length - 1]; let r = 1; while (r < a.length && a[a.length - 1 - r] === c) r++; return r; };
+
+// Depth-first search to confirm a shuffled layout can actually be solved.
+function solvable(start, cap){
+  const key = ts => ts.map(t => t.join(',')).sort().join('|');
+  const seen = new Set();
+  const stack = [start.map(t => t.slice())];
+  let nodes = 0;
+  while (stack.length){
+    const s = stack.pop();
+    if (isWon(s, cap)) return true;
+    const k = key(s);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    if (++nodes > 150000) return false;
+    for (let i = 0; i < s.length; i++){
+      const a = s[i];
+      if (!a.length || (a.length === cap && uniform(a))) continue;
+      const c = a[a.length - 1], run = topRun(a);
+      let triedEmpty = false;
+      for (let j = 0; j < s.length; j++){
+        if (i === j) continue;
+        const b = s[j];
+        if (b.length >= cap) continue;
+        if (b.length === 0){
+          if (run === a.length || triedEmpty) continue;
+          triedEmpty = true;
+        } else if (b[b.length - 1] !== c) continue;
+        const n = Math.min(run, cap - b.length);
+        const ns = s.map(t => t.slice());
+        for (let m = 0; m < n; m++) ns[j].push(ns[i].pop());
+        stack.push(ns);
+      }
+    }
+  }
+  return false;
+}
+
+// Find a way to finish from a position, preferring sensible moves first (completing
+// tubes, stacking on matching colors, avoiding empty tubes), so the first move of
+// the answer makes a reasonable hint.
+// Returns { status: 'solved', path }, { status: 'none' } when every possibility has
+// been tried, or { status: 'unknown' } when the search gave up before finishing.
+function solvePath(start, cap, limit = 60000){
+  const key = ts => ts.map(t => t.join(',')).sort().join('|');
+  const seen = new Set(), path = [];
+  let nodes = 0, capped = false;
+  function moves(s){
+    const list = [];
+    for (let i = 0; i < s.length; i++){
+      const a = s[i];
+      if (!a.length || (a.length === cap && uniform(a))) continue;
+      const c = a[a.length - 1], run = topRun(a);
+      let triedEmpty = false;
+      for (let j = 0; j < s.length; j++){
+        if (i === j) continue;
+        const b = s[j];
+        if (b.length >= cap) continue;
+        if (b.length === 0){
+          if (run === a.length || triedEmpty) continue;
+          triedEmpty = true;
+        } else if (b[b.length - 1] !== c) continue;
+        const n = Math.min(run, cap - b.length);
+        let sc = 0;
+        if (b.length){
+          sc += 2;
+          if (b.every(x => x === c)){ sc += 1; if (b.length + n === cap) sc += 3; }
+          if (n === a.length) sc += 1;
+        } else sc -= 1;
+        if (n < run) sc -= 1;
+        list.push([sc, i, j, n]);
+      }
+    }
+    return list.sort((x, y) => y[0] - x[0]);
+  }
+  function dfs(s){
+    if (isWon(s, cap)) return true;
+    const k = key(s);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    if (++nodes > limit || path.length > 350){ capped = true; return false; }
+    for (const [, i, j, n] of moves(s)){
+      const ns = s.map(t => t.slice());
+      for (let m = 0; m < n; m++) ns[j].push(ns[i].pop());
+      path.push([i, j]);
+      if (dfs(ns)) return true;
+      path.pop();
+      if (capped) return false;
+    }
+    return false;
+  }
+  if (dfs(start.map(t => t.slice()))) return { status: 'solved', path: path.slice(), nodes };
+  return { status: capped ? 'unknown' : 'none', nodes };
+}
+
+// Fewer same-color neighbors means a more thorough scramble.
+const clumps = tubes => tubes.reduce((n, t) => { for (let k = 1; k < t.length; k++) if (t[k] === t[k - 1]) n++; return n; }, 0);
+
+// Levels are seeded by number, so every friend gets the same Level 12.
+function params2(level){
+  const l = Math.min(level, MAX_LEVEL);
+  let cap, colors, k;
+  if (l <= 150){ cap = 6; colors = Math.min(12, 9 + Math.floor((l - 101) / 8)); k = 1 + Math.floor((l - 101) / 16); }
+  else if (l <= 200){ cap = 6; colors = 12; k = 3 + Math.floor((l - 151) / 25); }
+  else if (l <= 250){ cap = 7; colors = Math.min(12, 10 + Math.floor((l - 201) / 12)); k = 2 + Math.floor((l - 201) / 20); }
+  else { cap = 7; colors = 12; k = 4 + Math.floor((l - 251) / 20); }
+  return { cap, colors, k, empty: 2 };
+}
+function genLevel2(level){
+  const p = params2(level);
+  const r = rng(level * 7919 + 13);
+  let best = null, bestEffort = -1, found = 0;
+  for (let attempt = 0; attempt < 200 && (found < p.k || !best); attempt++){
+    const balls = [];
+    for (let c = 0; c < p.colors; c++) for (let i = 0; i < p.cap; i++) balls.push(c);
+    for (let i = balls.length - 1; i > 0; i--){
+      const j = Math.floor(r() * (i + 1));
+      [balls[i], balls[j]] = [balls[j], balls[i]];
+    }
+    const tubes = [];
+    for (let t = 0; t < p.colors; t++) tubes.push(balls.slice(t * p.cap, (t + 1) * p.cap));
+    if (tubes.some(uniform)) continue;
+    for (let e = 0; e < p.empty; e++) tubes.push([]);
+    const res = solvePath(tubes, p.cap, attempt < 60 ? 8000 : 40000);
+    if (res.status === 'solved'){ found++; if (res.nodes > bestEffort){ best = tubes; bestEffort = res.nodes; } }
+  }
+  // Every buried ball starts hidden from level 101 on.
+  let id = 0;
+  const hidden = [];
+  const tubes = best.map(t => t.map((c, k) => {
+    const o = { c, id: id++ };
+    if (k < t.length - 1) hidden.push(o.id);
+    return o;
+  }));
+  return { tubes, cap: p.cap, hidden, extra: false };
+}
+function genLevel(level){
+  if (level > 100) return genLevel2(level);
+  const p = params(level);
+  const r = rng(level * 7919 + 13);
+  let best = null, bestScore = Infinity, found = 0;
+  for (let attempt = 0; attempt < 80 && found < p.candidates; attempt++){
+    const balls = [];
+    for (let c = 0; c < p.colors; c++) for (let i = 0; i < p.cap; i++) balls.push(c);
+    for (let i = balls.length - 1; i > 0; i--){
+      const j = Math.floor(r() * (i + 1));
+      [balls[i], balls[j]] = [balls[j], balls[i]];
+    }
+    const tubes = [];
+    for (let t = 0; t < p.colors; t++) tubes.push(balls.slice(t * p.cap, (t + 1) * p.cap));
+    if (tubes.some(uniform)) continue;
+    const score = clumps(tubes);
+    if (score >= bestScore) { found++; continue; }
+    for (let e = 0; e < p.empty; e++) tubes.push([]);
+    if (solvable(tubes, p.cap)){ best = tubes; bestScore = score; found++; }
+  }
+  // Mark buried balls as hidden (top balls are always visible).
+  let id = 0;
+  const hidden = [];
+  const tubes = best.map(t => t.map((c, k) => {
+    const o = { c, id: id++ };
+    if (k < t.length - 1 && r() < p.hide) hidden.push(o.id);
+    return o;
+  }));
+  return { tubes, cap: p.cap, hidden, extra: p.extra };
+}
+// ---- end puzzle logic ----
+
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch(e){ store.ok = false; } }
+};
+// Check once whether this browser will actually keep saved progress.
+store.ok = (() => {
+  try { localStorage.setItem('tubesort-check', '1'); const ok = localStorage.getItem('tubesort-check') === '1'; localStorage.removeItem('tubesort-check'); return ok; }
+  catch(e){ return false; }
+})();
+// Ask the browser not to clear the game's saved data on its own (honored where supported).
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch(e){}
+
+const board = document.getElementById('board');
+const el = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const cols = t => t.map(o => o.c);
+let S = null;
+
+// Short vibrations on phones that support it (Android Chrome; iPhones ignore this).
+let vibeOn = true;
+function buzz(pattern){
+  if (!vibeOn) return;
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e){}
+}
+const BUZZ = { bad: [30, 50, 30], tube: 40, level: [60, 70, 140] };
+
+// ---- players: each name on this device keeps its own progress and settings ----
+const players = (() => {
+  let data = null;
+  try { data = JSON.parse(store.get('tubesort-players') || 'null'); } catch(e){}
+  if (!data || typeof data !== 'object' || !data.list){
+    data = { list: {}, last: null, music: true, legacy: null };
+    // Carry over progress saved before names existed; the first player created inherits it.
+    const lvl = parseInt(store.get('tubesort-level'), 10);
+    if (lvl){
+      let best = {};
+      try { best = JSON.parse(store.get('tubesort-best') || '{}') || {}; } catch(e){}
+      data.legacy = { level: lvl, top: parseInt(store.get('tubesort-top'), 10) || lvl, best,
+                      symbols: store.get('tubesort-symbols') === '1' };
+    }
+  }
+  const save = () => store.set('tubesort-players', JSON.stringify(data));
+  const key = name => name.trim().toLowerCase();
+  // The tester is recognized by a fingerprint of the name, so the name itself
+  // never appears in the page. The tester is never shown in the player list.
+  const fp = str => { let h = 0x811c9dc5; for (const ch of new TextEncoder().encode(str)){ h ^= ch; h = Math.imul(h, 0x01000193) >>> 0; } return h; };
+  const isTester = name => fp(name.toLowerCase().replace(/\s+/g, '')) === 0xeb7309d9;
+  const TEST_KEY = '\u0000tester';
+  let current = null;
+  return {
+    save,
+    get data(){ return data; },
+    get cur(){ return current ? data.list[current] : null; },
+    sorted(){ return Object.entries(data.list).filter(([, p]) => !p.test).sort((a, b) => (b[1].seen || 0) - (a[1].seen || 0)); },
+    use(name, music, sounds){
+      const tester = isTester(name);
+      const k = tester ? TEST_KEY : key(name);
+      if (tester && !data.list[k]) data.list[k] = { name: 'Test mode', test: true, level: 1, top: 1, best: {}, symbols: false };
+      if (!data.list[k]){
+        const base = data.legacy || { level: 1, top: 1, best: {}, symbols: false };
+        data.list[k] = { name: name.trim(), level: base.level, top: base.top, best: base.best, symbols: base.symbols };
+        data.legacy = null;
+      }
+      current = k;
+      data.list[k].seen = Date.now();
+      data.list[k].music = music;
+      data.list[k].sounds = sounds;
+      if (!tester){ data.last = k; data.music = music; data.sounds = sounds; }
+      save();
+      return data.list[k];
+    },
+    remove(k){
+      delete data.list[k];
+      if (data.last === k) data.last = null;
+      if (current === k) current = null;
+      save();
+    }
+  };
+})();
+
+// Highest level unlocked and best move count per solved level, for the current player.
+const progress = {
+  get top(){ return players.cur.test ? MAX_LEVEL + 20 : players.cur.top; },
+  best: lvl => players.cur.best[lvl],
+  solved(lvl, moves, hinted){
+    const p = players.cur;
+    // Best move counts only count when no hints were used.
+    if (!hinted && (!p.best[lvl] || moves < p.best[lvl])) p.best[lvl] = moves;
+    p.top = Math.max(p.top, lvl + 1);
+    players.save();
+  }
+};
+
+// ---- composition ----
+// Original melody in G major, 3/4 time. Each phrase is 4 bars (12 beats): [midi, beats].
+// A ten-minute suite for solo flute, all hand-written except for light ornaments,
+// with a harp underneath. Each entry carries a harp level (0 = silent, 1 = full)
+// and whether the harp plays sparsely (one rolled chord per bar instead of a
+// flowing pattern). The harp's chords are worked out from the melody itself.
+function composeSuite(){
+  // opening themes
+  const A  = [[74,2],[71,1],[69,1.5],[67,.5],[69,1],[71,2],[74,1],[76,3]];
+  const B  = [[79,1.5],[76,.5],[74,1],[76,1],[74,1],[71,1],[69,2],[67,1],[69,3]];
+  const C  = [[71,2],[72,1],[74,1.5],[76,.5],[74,1],[71,1],[69,1],[67,1],[66,1],[67,2]];
+  const D  = [[64,1],[67,1],[69,1],[71,3],[69,1.5],[67,4.5]];
+  const E  = [[71,1],[74,1],[76,1],[79,2],[78,1],[76,1.5],[74,.5],[71,1],[74,3]];
+  const F  = [[76,2],[74,1],[71,1],[69,1],[67,1],[64,2],[67,1],[69,3]];
+  const E2 = [[71,1],[74,1],[76,1],[79,1.5],[81,.5],[79,1],[78,1],[76,1],[74,1],[76,3]];
+  const H  = [[67,2],[64,1],[62,3],[64,1],[67,1],[69,1],[71,3]];
+  const G  = [[72,1.5],[71,.5],[69,1],[71,1.5],[69,.5],[67,1],[69,1],[71,1],[72,1],[74,3]];
+  const A2 = [[74,1.5],[76,.5],[74,1],[71,.5],[69,1],[67,.5],[69,1],[71,2],[74,1],[76,1],[79,2]];
+  const D2 = [[64,1],[67,1],[69,1],[71,3],[69,1.5],[67,1.5],[64,3],[62,1.5],[64,.5],[67,1],[69,3],[67,6]];
+  // a warm new tune in the flute's middle voice
+  const I1 = [[67,1],[69,1],[71,1],[74,2],[72,1],[71,2],[69,1],[67,3]];
+  const I2 = [[69,1],[71,1],[72,1],[76,2],[74,1],[72,1.5],[71,.5],[69,1],[71,3]];
+  const I3 = [[67,1],[69,1],[71,1],[74,2],[76,1],[74,1.5],[72,.5],[71,1],[69,3]];
+  const I4 = [[71,2],[69,1],[67,1.5],[66,.5],[64,1],[66,2],[69,1],[67,3]];
+  // a song in E minor
+  const J1 = [[64,2],[67,1],[71,2],[69,1],[67,1.5],[66,.5],[64,1],[66,3]];
+  const J2 = [[67,2],[69,1],[71,1.5],[74,.5],[72,1],[71,2],[69,1],[71,3]];
+  const J3 = [[76,2],[74,1],[72,1.5],[71,.5],[69,1],[71,2],[67,1],[69,3]];
+  const J4 = [[67,1],[66,1],[64,1],[66,1.5],[67,.5],[69,1],[71,2],[66,1],[64,3]];
+  const J5 = [[64,1.5],[66,.5],[67,1],[71,2],[69,1],[67,1],[66,1],[64,1],[66,3]];
+  const J6 = [[71,2],[72,1],[74,2],[72,1],[71,1],[69,1],[67,1],[66,3]];
+  const J7 = [[69,2],[71,1],[72,2],[71,1],[69,1.5],[67,.5],[66,1],[67,3]];
+  const J8 = [[64,1],[66,1],[67,1],[69,2],[67,1],[66,1.5],[64,.5],[62,1],[64,3]];
+  // a song in G
+  const K1 = [[74,1],[72,1],[71,1],[72,2],[74,1],[76,2],[74,1],[71,3]];
+  const K2 = [[72,1],[71,1],[69,1],[71,2],[72,1],[74,1.5],[72,.5],[71,1],[69,3]];
+  const K3 = [[67,1],[71,1],[74,1],[79,2],[76,1],[74,1.5],[72,.5],[71,1],[72,3]];
+  const K4 = [[71,1.5],[69,.5],[67,1],[69,2],[71,1],[69,1],[67,1],[66,1],[67,3]];
+  const K5 = [[74,1.5],[76,.5],[74,1],[72,2],[71,1],[72,1],[74,1],[76,1],[74,3]];
+  const K6 = [[72,2],[71,1],[69,1.5],[71,.5],[72,1],[71,2],[69,1],[67,3]];
+  const K7 = [[69,1],[71,1],[72,1],[74,2],[76,1],[74,1],[72,1],[71,1],[69,3]];
+  const K8 = [[67,1],[69,1],[71,1],[69,2],[67,1],[66,1.5],[64,.5],[66,1],[67,3]];
+
+  const r = rng(20260926);   // fixed seed: the same ornaments every time
+  const SCALE = [62,64,66,67,69,71,72,74,76,78,79,81];
+  const nearest = m => SCALE.reduce((bi, x, i) => Math.abs(x - m) < Math.abs(SCALE[bi] - m) ? i : bi, 0);
+  const step = (m, k) => SCALE[Math.max(0, Math.min(SCALE.length - 1, nearest(m) + k))];
+
+  // Gentle decoration: a turn around some held notes, a passing note across some
+  // thirds. Total length never changes.
+  function ornament(ph, amount){
+    const out = [];
+    ph.forEach(([m, d], i) => {
+      const next = ph[i + 1];
+      const last = i === ph.length - 1;
+      if (!last && d >= 2 && r() < amount){
+        out.push([m, d - 0.5], [step(m, 1), 0.25], [m, 0.25]);
+      } else if (!last && next && d >= 1 && Math.abs(next[0] - m) >= 3 && Math.abs(next[0] - m) <= 4 && r() < amount){
+        out.push([m, d - 0.5], [step(m, next[0] > m ? 1 : -1), 0.5]);
+      } else out.push([m, d]);
+    });
+    return out;
+  }
+  const slow = ph => ph.map(([m, d]) => [m, d * 2]);
+  const bar = { rest: 3 }, pause = { rest: 6 };
+  // Attach a harp level to a group of phrases.
+  const sec = (harp, sparse, ...items) => items.map(it => ({ notes: it.rest ? null : it, rest: it.rest || 0, harp, sparse }));
+
+  return [
+    // I. Theme: whistle alone at first, the harp enters softly
+    ...sec(0, false, A, B), ...sec(0.45, false, A, C, D, bar),
+    // II. The wandering middle
+    ...sec(0.6, false, E, F, E2, H, G, bar),
+    // III. The theme, lightly ornamented
+    ...sec(0.6, false, ornament(A, 0.35), ornament(B, 0.35), ornament(C, 0.35), D, bar),
+    // IV. A warm new tune
+    ...sec(0.65, false, I1, I2, I3, I4, ornament(D, 0.3), bar),
+    // V. Slowly, low and quiet; the harp only rolls a chord each bar
+    ...sec(0.45, true, slow(H), slow(F), pause),
+    // VI. A song in E minor
+    ...sec(0.7, false, J1, J2, J3, J4, J5, J6, J7, J8, bar),
+    // VII. The middle, recalled
+    ...sec(0.6, false, ornament(E, 0.3), F, ornament(E2, 0.3), G, bar),
+    // VIII. A song in G
+    ...sec(0.7, false, K1, K2, K3, K4, K5, K6, K7, K8, bar),
+    // IX. A half-remembered theme
+    ...sec(0.5, false, ornament(A2, 0.3), I3, ornament(H, 0.3), bar),
+    // X. Homecoming: the harp fades away under the final phrase
+    ...sec(0.45, false, A, B, A2), ...sec(0.3, false, C), ...sec(0.25, true, D2), ...sec(0, false, pause)
+  ];
+}
+// ---- holiday medley: secular, public-domain tunes arranged for whistle and harp ----
+// [midi, beats]; midi 0 is a rest. Each entry also carries its own tempo and meter.
+function composeHoliday(){
+  // Carol of the Bells (Leontovych's "Shchedryk", 1916), E minor, 3/4
+  const bar4 = b => [...b, ...b, ...b, ...b];
+  const CB_A = bar4([[67,1],[66,.5],[67,.5],[64,1]]);
+  const CB_B = bar4([[71,1],[69,.5],[71,.5],[67,1]]);
+  const CB_C = [[76,.5],[76,.5],[74,.5],[72,.5],[71,.5],[69,.5], [71,.5],[71,.5],[69,.5],[67,.5],[66,.5],[64,.5],
+                [76,.5],[76,.5],[74,.5],[72,.5],[71,.5],[69,.5], [71,.5],[71,.5],[69,.5],[67,.5],[66,.5],[64,.5]];
+  const CB = [...CB_A, ...CB_B, ...CB_A, ...CB_C, ...CB_A];
+  // Jingle Bells (1857), G major, 4/4
+  const JV1 = [[62,1],[71,1],[69,1],[67,1],[62,3],[62,.5],[62,.5],[62,1],[71,1],[69,1],[67,1],[64,4],
+               [64,1],[72,1],[71,1],[69,1],[66,4],[74,1],[74,1],[72,1],[69,1],[71,4]];
+  const JV2 = [[62,1],[71,1],[69,1],[67,1],[62,4],[62,1],[71,1],[69,1],[67,1],[64,3],[64,1],
+               [64,1],[72,1],[71,1],[69,1],[74,1],[74,1],[74,1],[74,1],[76,1],[74,1],[72,1],[69,1],[67,2],[62,2]];
+  const JC1 = [[71,1],[71,1],[71,2],[71,1],[71,1],[71,2],[71,1],[74,1],[67,1.5],[69,.5],[71,4],
+               [72,1],[72,1],[72,1.5],[72,.5],[72,1],[71,1],[71,1],[71,.5],[71,.5],[71,1],[69,1],[69,1],[71,1],[69,2],[74,2]];
+  const JC2 = [...JC1.slice(0, 20), [74,1],[74,1],[72,1],[69,1],[67,4]];
+  // Deck the Halls (Welsh traditional), G major, 4/4
+  const DK1 = [[74,1.5],[72,.5],[71,1],[69,1],[67,1],[69,1],[71,1],[67,1],[69,.5],[71,.5],[72,.5],[69,.5],[71,1.5],[69,.5],[67,1],[66,1],[67,2]];
+  const DK3 = [[69,1.5],[71,.5],[72,1],[69,1],[71,1.5],[72,.5],[74,1],[69,1],[71,.5],[73,.5],[74,1],[76,.5],[78,.5],[79,1],[78,1],[76,1],[74,2]];
+  const DK4 = [[74,1.5],[72,.5],[71,1],[69,1],[67,1],[69,1],[71,1],[67,1],[76,.5],[76,.5],[76,.5],[76,.5],[74,1.5],[72,.5],[71,1],[69,1],[67,2]];
+  const DECK = [...DK1, ...DK1, ...DK3, ...DK4];
+  // We Wish You a Merry Christmas (English traditional), G major, 3/4, with its pickup
+  const WW = [[0,2],[62,1],[67,1],[67,.5],[69,.5],[67,.5],[66,.5],[64,1],[64,1],[64,1],[69,1],[69,.5],[71,.5],[69,.5],[67,.5],
+              [66,1],[62,1],[62,1],[71,1],[71,.5],[72,.5],[71,.5],[69,.5],[67,1],[64,1],[62,.5],[62,.5],[64,1],[69,1],[66,1],[67,3]];
+  // Auld Lang Syne (Scottish traditional), G major, 4/4
+  const ALV = [[0,3],[62,1],[67,1.5],[67,.5],[67,1],[71,1],[69,1.5],[67,.5],[69,1],[71,.5],[69,.5],[67,1.5],[67,.5],[71,1],[74,1],
+               [76,3],[76,1],[74,1.5],[71,.5],[71,1],[67,1],[69,1.5],[67,.5],[69,1],[71,.5],[69,.5],[67,1.5],[64,.5],[64,1],[62,1],[67,3],[0,1]];
+  const ALC = [[0,3],[76,1],[74,1.5],[71,.5],[71,1],[67,1],[69,1.5],[67,.5],[69,1],[76,1],[74,1.5],[71,.5],[71,1],[74,1],
+               [76,3],[76,1],[74,1.5],[71,.5],[71,1],[67,1],[69,1.5],[67,.5],[69,1],[71,.5],[69,.5],[67,1.5],[64,.5],[64,1],[62,1],[67,4]];
+  // Two quiet winter interludes built on your original tunes
+  const OA = [[74,2],[71,1],[69,1.5],[67,.5],[69,1],[71,2],[74,1],[76,3]];
+  const OB = [[79,1.5],[76,.5],[74,1],[76,1],[74,1],[71,1],[69,2],[67,1],[69,3]];
+  const OC = [[71,2],[72,1],[74,1.5],[76,.5],[74,1],[71,1],[69,1],[67,1],[66,1],[67,2]];
+  const OD = [[64,1],[67,1],[69,1],[71,3],[69,1.5],[67,4.5]];
+  const I1 = [[67,1],[69,1],[71,1],[74,2],[72,1],[71,2],[69,1],[67,3]];
+  const I2 = [[69,1],[71,1],[72,1],[76,2],[74,1],[72,1.5],[71,.5],[69,1],[71,3]];
+  const I3 = [[67,1],[69,1],[71,1],[74,2],[76,1],[74,1.5],[72,.5],[71,1],[69,3]];
+  const I4 = [[71,2],[69,1],[67,1.5],[66,.5],[64,1],[66,2],[69,1],[67,3]];
+
+  const r = rng(1225);
+  const SC = [62,64,66,67,69,71,72,74,76,78,79,81];
+  const near = m => SC.reduce((bi, x, i) => Math.abs(x - m) < Math.abs(SC[bi] - m) ? i : bi, 0);
+  const ornament = (ph, amount) => ph.flatMap(([m, d], i) =>
+    m > 0 && i < ph.length - 1 && d >= 2 && r() < amount
+      ? [[m, d - 0.5], [SC[Math.min(SC.length - 1, near(m) + 1)], 0.25], [m, 0.25]]
+      : [[m, d]]);
+  const cat = (...parts) => parts.flat();
+  const SLOW = 0.8;   // the whole medley plays at 80% of these tempos
+  const item = (o, notes) => ({ notes, rest: 0, harp: o.harp, sparse: !!o.sparse, bpm: o.bpm * SLOW, meter: o.meter, bells: !!o.bells });
+  const rest = (o, beats) => ({ notes: null, rest: beats, harp: 0, bpm: o.bpm * SLOW, meter: o.meter });
+  const T = {
+    bells:   { bpm: 138, meter: 3, harp: 0.4 },
+    jingle:  { bpm: 116, meter: 4, harp: 0.45, bells: true },
+    winter:  { bpm: 62,  meter: 3, harp: 0.35, sparse: true },
+    winter2: { bpm: 64,  meter: 3, harp: 0.4 },
+    deck:    { bpm: 104, meter: 4, harp: 0.45 },
+    wish:    { bpm: 126, meter: 3, harp: 0.45, bells: true },
+    auld:    { bpm: 72,  meter: 4, harp: 0.4 },
+    auldEnd: { bpm: 66,  meter: 4, harp: 0.3, sparse: true }
+  };
+  return [
+    item(T.bells, CB), rest(T.bells, 3),
+    item(T.jingle, cat(JV1, JV2)), item(T.jingle, cat(JC1, JC2)), item(T.jingle, cat(ornament(JC1, 0.5), ornament(JC2, 0.5))), rest(T.jingle, 4),
+    item(T.winter, cat(OA, OB, OA, OC, OD)), rest(T.winter, 3),
+    item(T.deck, DECK), item(T.deck, ornament(DECK, 0.5)), rest(T.deck, 4),
+    item(T.wish, WW), item(T.wish, WW), item(T.wish, ornament(WW, 0.6)), item(T.wish, WW), rest(T.wish, 3),
+    item(T.winter2, cat(I1, I2, I3, I4)), rest(T.winter2, 3),
+    item(T.bells, CB), rest(T.bells, 3),
+    item(T.jingle, cat(ornament(JV1, 0.4), JV2)), item(T.jingle, cat(JC1, JC2)), rest(T.jingle, 4),
+    item(T.deck, ornament(DECK, 0.3)), rest(T.deck, 4),
+    item(T.auld, ALV), item(T.auld, ALC), item(T.auldEnd, ornament(ALV, 0.4)), rest(T.auldEnd, 8)
+  ];
+}
+
+// Pick a chord for each bar of a phrase from the melody notes in it:
+// the chord that holds the most melody time wins, with a bonus for the note on
+// the downbeat and a slight preference for the home chords.
+const CHORDS = {
+  G:  { pcs: [7, 11, 2], root: 43, prior: 0.3 },
+  C:  { pcs: [0, 4, 7],  root: 48, prior: 0.2 },
+  D:  { pcs: [2, 6, 9],  root: 50, prior: 0.2 },
+  Em: { pcs: [4, 7, 11], root: 52, prior: 0.25 },
+  Am: { pcs: [9, 0, 4],  root: 45, prior: 0.12 }
+};
+function chordsFor(notes, meter = 3){
+  const beats = notes.reduce((a, n) => a + n[1], 0);
+  const bars = Math.round(beats / meter);
+  const out = [];
+  for (let b = 0; b < bars; b++){
+    const lo = b * meter, hi = lo + meter;
+    let best = 'G', bestScore = -1, t = 0;
+    const inBar = [];
+    notes.forEach(([m, d]) => {
+      const s0 = Math.max(t, lo), s1 = Math.min(t + d, hi);
+      if (s1 > s0 && m > 0) inBar.push({ pc: m % 12, len: s1 - s0, down: t <= lo && t + d > lo });
+      t += d;
+    });
+    for (const [name, c] of Object.entries(CHORDS)){
+      let score = c.prior;
+      inBar.forEach(x => { if (c.pcs.includes(x.pc)) score += x.len + (x.down ? 0.6 : 0); });
+      if (score > bestScore){ bestScore = score; best = name; }
+    }
+    out.push(best);
+  }
+  return out;
+}
+// ---- end composition ----
+
+// ---- music: an original, mellow tune for a solo wooden flute, synthesized live ----
+const Music = (() => {
+  let ctx = null, master = null, session = null, timer = null, noise = null;
+  let playing = false;
+  const BEAT = 60 / 66;            // slow waltz, 66 beats per minute
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+  function init(){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0.55;
+    // Soft room reverb from a generated impulse.
+    const len = Math.floor(ctx.sampleRate * 3.2);
+    const imp = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++){
+      const d = imp.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+    }
+    const verb = ctx.createConvolver(); verb.buffer = imp;
+    const wet = ctx.createGain(); wet.gain.value = 0.5;
+    master.connect(ctx.destination);
+    master.connect(verb); verb.connect(wet); wet.connect(ctx.destination);
+    // Breath noise shared by every note.
+    noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const nd = noise.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    return true;
+  }
+
+  // ---- penny whistle voice ----
+  // One continuous breath per phrase, like a real player: notes are mostly slurred
+  // with quick finger changes, some are tongued with a brief dip and a puff of air,
+  // the pitch scoops up slightly on attacks, the breath is always audible, and
+  // vibrato only blooms on long notes. This is what keeps it from sounding like an organ.
+  let wave = null;
+  function whistleWave(){
+    if (wave) return wave;
+    const amps = [0, 1, 0.24, 0.08, 0.035, 0.015, 0.007, 0.003];   // clear, with the upper edge softened
+    const real = new Float32Array(amps.length), imag = new Float32Array(amps);
+    wave = ctx.createPeriodicWave(real, imag);
+    return wave;
+  }
+
+  function whistlePhrase(out, t0, notes, bd = BEAT){
+    const times = [];
+    let t = t0;
+    notes.forEach(([m, b]) => { times.push(t); t += b * bd; });
+    const tEnd = t, n = notes.length;
+
+    const tone = ctx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 6500; tone.Q.value = 0.5;
+    const amp = ctx.createGain(); amp.gain.value = 0;
+    tone.connect(amp); amp.connect(out);
+
+    const osc = ctx.createOscillator(); osc.setPeriodicWave(whistleWave());
+    osc.connect(tone);
+
+    // Breath: noise that follows the pitch, always present under the tone.
+    const air = ctx.createBufferSource(); air.buffer = noise; air.loop = true;
+    const airBp = ctx.createBiquadFilter(); airBp.type = 'bandpass'; airBp.Q.value = 2.2;
+    const airG = ctx.createGain(); airG.gain.value = 0;
+    air.connect(airBp); airBp.connect(airG); airG.connect(out);
+    // Chiff: a higher puff at tongued attacks.
+    const chiff = ctx.createBufferSource(); chiff.buffer = noise; chiff.loop = true;
+    const chHp = ctx.createBiquadFilter(); chHp.type = 'bandpass'; chHp.frequency.value = 5000; chHp.Q.value = 0.8;
+    const chG = ctx.createGain(); chG.gain.value = 0;
+    chiff.connect(chHp); chHp.connect(chG); chG.connect(out);
+
+    // Vibrato and a slight unsteadiness of breath.
+    const vib = ctx.createOscillator(); vib.frequency.value = 4.6 + Math.random() * 0.8;
+    const vibD = ctx.createGain(); vibD.gain.value = 0;
+    vib.connect(vibD); vibD.connect(osc.frequency);
+    const wob = ctx.createOscillator(); wob.frequency.value = 0.6 + Math.random() * 0.5;
+    const wobD = ctx.createGain(); wobD.gain.value = 0.035;
+    const wobSum = ctx.createGain(); wobSum.gain.value = 1;
+    wob.connect(wobD); wobD.connect(wobSum.gain);
+    amp.disconnect(); tone.disconnect(); tone.connect(amp); amp.connect(wobSum); wobSum.connect(out);
+
+    let prevF = 0, lastLvl = 0;
+    notes.forEach(([m, b], i) => {
+      const ti = times[i], dur = b * bd;
+      const f = mtof(m) * Math.pow(2, (Math.random() - 0.5) * 0.004);
+      // Phrase shape: swell toward the middle, taper at the end.
+      const lvl = 0.16 * (0.82 + 0.22 * Math.sin(Math.PI * (i + 0.5) / n)) * (i === n - 1 ? 0.9 : 1);
+      const first = i === 0;
+      const tongued = first || m === notes[i - 1][0] || notes[i - 1][1] >= 2 || (b >= 1 && Math.random() < 0.3);
+
+      if (first){
+        osc.frequency.setValueAtTime(f * 0.97, ti);
+        osc.frequency.exponentialRampToValueAtTime(f, ti + 0.06);
+        amp.gain.setValueAtTime(0, ti);
+        amp.gain.linearRampToValueAtTime(lvl * 1.15, ti + 0.05);
+        amp.gain.linearRampToValueAtTime(lvl, ti + 0.18);
+      } else {
+        osc.frequency.setValueAtTime(prevF, ti - 0.014);
+        if (tongued){
+          osc.frequency.exponentialRampToValueAtTime(f * 0.985, ti);
+          osc.frequency.exponentialRampToValueAtTime(f, ti + 0.045);
+          amp.gain.setValueAtTime(lvl, ti - 0.035);
+          amp.gain.linearRampToValueAtTime(lvl * 0.18, ti - 0.005);
+          amp.gain.linearRampToValueAtTime(lvl * 1.08, ti + 0.035);
+          amp.gain.linearRampToValueAtTime(lvl, ti + 0.14);
+        } else {
+          osc.frequency.exponentialRampToValueAtTime(f, ti);
+          amp.gain.linearRampToValueAtTime(lvl, ti + 0.03);
+        }
+      }
+      if (tongued){
+        chG.gain.setValueAtTime(0, ti);
+        chG.gain.linearRampToValueAtTime(0.045, ti + 0.008);
+        chG.gain.exponentialRampToValueAtTime(0.0005, ti + 0.06);
+      }
+      airBp.frequency.setValueAtTime(f * 1.02, ti);
+      if (first) airG.gain.setValueAtTime(0, ti);
+      airG.gain.linearRampToValueAtTime(lvl * 0.16, ti + 0.03);
+      // Vibrato only on held notes, arriving late and gently.
+      vibD.gain.setValueAtTime(0, ti);
+      if (dur > 0.9){
+        vibD.gain.setValueAtTime(0, ti + 0.35);
+        vibD.gain.linearRampToValueAtTime(f * 0.005, ti + Math.min(dur, 1.2));
+      }
+      prevF = f; lastLvl = lvl;
+    });
+    // Release at the end of the breath.
+    amp.gain.linearRampToValueAtTime(lastLvl, tEnd - 0.08);
+    amp.gain.setTargetAtTime(0, tEnd - 0.08, 0.07);
+    airG.gain.setTargetAtTime(0, tEnd - 0.08, 0.06);
+    vibD.gain.setTargetAtTime(0, tEnd - 0.1, 0.05);
+    [osc, air, chiff, vib, wob].forEach(o => { o.start(t0); o.stop(tEnd + 0.6); });
+  }
+
+  // ---- the composition: a ten-minute suite for solo flute, built from the original themes ----
+  let SONG = null, pos = 0, nextT = 0, suite = 'classic';
+
+  // ---- harp: plucked strings made with the Karplus-Strong method ----
+  // A burst of soft noise circulates through a short delay that loses a little
+  // brightness on every pass, which is physically close to how a string rings out.
+  // Each pitch is computed once and reused.
+  const pluckCache = {};
+  function pluckBuffer(m){
+    if (pluckCache[m]) return pluckCache[m];
+    const sr = ctx.sampleRate, f = mtof(m);
+    const N = Math.max(2, Math.round(sr / f - 0.5));
+    const secs = m < 50 ? 3.2 : m < 60 ? 2.6 : 2.0;
+    const len = Math.floor(sr * secs);
+    const buf = ctx.createBuffer(1, len, sr), y = buf.getChannelData(0);
+    // Initial pluck: smoothed noise mixed with a triangle shape, for a warm, round attack.
+    let prev = 0;
+    for (let i = 0; i < N; i++){
+      prev = prev * 0.55 + (Math.random() * 2 - 1) * 0.45;
+      const tri = 1 - 2 * Math.abs(i / N - 0.3) / 0.7;
+      y[i] = prev * 0.6 + tri * 0.5;
+    }
+    const loss = m < 50 ? 0.9985 : 0.997;
+    for (let i = N; i < len; i++){
+      y[i] = loss * 0.5 * (y[i - N] + y[i - N - 1 < 0 ? 0 : i - N - 1]);
+    }
+    // Gentle fade at the very end so nothing clicks.
+    const fade = Math.floor(sr * 0.25);
+    for (let i = 0; i < fade; i++) y[len - 1 - i] *= i / fade;
+    const rate = f / (sr / (N + 0.5));      // correct the tuning of the whole-sample delay
+    return (pluckCache[m] = { buf, rate });
+  }
+  function pluck(out, t, m, vel){
+    const { buf, rate } = pluckBuffer(m);
+    const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+    const g = ctx.createGain(); g.gain.value = 0.2 * vel * (0.9 + Math.random() * 0.2);
+    src.connect(lp); lp.connect(g); g.connect(out);
+    src.start(t + (Math.random() - 0.5) * 0.012);
+  }
+  // One bar of harp. Flowing: bass on the downbeat, then the chord rising in eighth notes.
+  // Sparse: a slow rolled chord on the downbeat only.
+  function harpBar(out, t, chordName, level, sparse, bd = BEAT, meter = 3){
+    const c = CHORDS[chordName], r = c.root;
+    const third = c.pcs[1] - c.pcs[0], fifth = 7;
+    const th = ((third % 12) + 12) % 12;
+    if (sparse){
+      [r, r + fifth, r + 12, r + 12 + th].forEach((m, i) => pluck(out, t + i * 0.09, m, level * (i ? 0.7 : 1)));
+      return;
+    }
+    const e = bd / 2;
+    const pat = [r, r + fifth, r + 12, r + 12 + th, r + 12 + fifth, r + 12 + th, r + 12, r + fifth];
+    const acc = [1, 0.55, 0.7, 0.55, 0.62, 0.5, 0.66, 0.5];
+    for (let i = 0; i < meter * 2; i++) pluck(out, t + i * e, pat[i], level * acc[i]);
+  }
+  // Sleigh bells: a cluster of tiny bright metal jingles.
+  function jingle(out, t, vel){
+    [2600, 3300, 4200, 5200, 6500, 7900].forEach(f => {
+      const o = ctx.createOscillator(); o.type = 'triangle';
+      o.frequency.value = f * (0.96 + Math.random() * 0.08);
+      const g = ctx.createGain(), d = 0.08 + Math.random() * 0.14;
+      const tt = t + Math.random() * 0.025;
+      g.gain.setValueAtTime(0.0001, tt);
+      g.gain.exponentialRampToValueAtTime(0.018 * vel, tt + 0.003);
+      g.gain.exponentialRampToValueAtTime(0.0001, tt + d);
+      o.connect(g); g.connect(out); o.start(tt); o.stop(tt + d + 0.02);
+    });
+    const n = ctx.createBufferSource(); n.buffer = noise;
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6000;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.05 * vel, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    n.connect(hp); hp.connect(g); g.connect(out); n.start(t, Math.random() * 0.5); n.stop(t + 0.08);
+  }
+
+  function loop(){
+    if (!playing) return;
+    // Schedule only a few seconds ahead, so a phone never holds ten minutes of notes in memory.
+    while (nextT < ctx.currentTime + 6){
+      const item = SONG[pos];
+      const bd = 60 / (item.bpm || 66), meter = item.meter || 3;
+      const start = nextT;
+      let beats = item.rest;
+      if (item.notes){
+        beats = 0;
+        // Rests (midi 0) split the tune into separate breaths.
+        let group = [], gStart = nextT;
+        const flush = () => { if (group.length) whistlePhrase(session, gStart, group.map(([m, b]) => [m + 12, b]), bd); group = []; };
+        item.notes.forEach(([m, b]) => {
+          if (m === 0){ flush(); nextT += b * bd; gStart = nextT; }
+          else { if (!group.length) gStart = nextT; group.push([m, b]); nextT += b * bd; }
+          beats += b;
+        });
+        flush();
+      } else nextT += beats * bd;
+      // Harp underneath, following chords drawn from the melody.
+      if (item.harp > 0){
+        const chords = item.notes ? (item.chords || (item.chords = chordsFor(item.notes, meter))) : null;
+        for (let bar = 0; bar < beats / meter; bar++){
+          const ch = chords ? chords[bar] : 'G';
+          harpBar(session, start + bar * meter * bd, ch, item.harp, item.sparse || !chords, bd, meter);
+        }
+      }
+      // Sleigh bells on the lively tunes: a shake on every beat, lighter between.
+      if (item.bells){
+        for (let k = 0; k < beats * 2; k++) jingle(session, start + k * bd / 2, k % 2 ? 0.45 : (k % (meter * 2) === 0 ? 1 : 0.75));
+      }
+      pos = (pos + 1) % SONG.length;
+    }
+    timer = setTimeout(loop, 1000);
+  }
+
+  return {
+    start(){
+      if (playing) return;
+      if (!ctx && !init()) return;
+      try { ctx.resume(); } catch(e){}
+      playing = true;
+      session = ctx.createGain();
+      session.gain.setValueAtTime(0, ctx.currentTime);
+      session.gain.linearRampToValueAtTime(suite === 'holiday' ? 0.6 : 1, ctx.currentTime + 2);   // holiday medley 40% quieter
+      session.connect(master);
+      if (!SONG) SONG = suite === 'holiday' ? composeHoliday() : composeSuite();
+      pos = 0; nextT = ctx.currentTime + 0.4;
+      loop();
+    },
+    stop(){
+      if (!playing) return;
+      playing = false;
+      clearTimeout(timer);
+      const s = session;
+      s.gain.cancelScheduledValues(ctx.currentTime);
+      s.gain.setValueAtTime(s.gain.value, ctx.currentTime);
+      s.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+      setTimeout(() => s.disconnect(), 1000);
+    },
+    get playing(){ return playing; },
+    // Switch between the classic suite and the holiday medley, fading across if playing.
+    setSuite(name){
+      if (name === suite) return;
+      suite = name; SONG = null;
+      if (playing){ this.stop(); setTimeout(() => { if (!playing) this.start(); }, 900); }
+    },
+    // Shared audio for sound effects, created on the first tap.
+    audio(){
+      if (!ctx && !init()) return null;
+      if (ctx.state === 'suspended' && !document.hidden){ try { ctx.resume(); } catch(e){} }
+      return { ctx, master, noise };
+    },
+    pause(){ if (ctx && ctx.state === 'running') ctx.suspend(); },
+    resume(){ if (ctx) ctx.resume(); }
+  };
+})();
+document.addEventListener('visibilitychange', () => document.hidden ? Music.pause() : Music.resume());
+
+// ---- sound effects: glass clinks, a cork pop, a small chime ----
+const Sfx = (() => {
+  let on = true;
+  const A = () => on ? Music.audio() : null;
+  function tone(a, t, f, type, gain, decay, bendTo){
+    const o = a.ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t);
+    if (bendTo) o.frequency.exponentialRampToValueAtTime(bendTo, t + decay * 0.6);
+    const g = a.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    o.connect(g); g.connect(a.master);
+    o.start(t); o.stop(t + decay + 0.05);
+  }
+  function puff(a, t, freq, q, gain, decay){
+    const n = a.ctx.createBufferSource(); n.buffer = a.noise;
+    const bp = a.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q;
+    const g = a.ctx.createGain();
+    g.gain.setValueAtTime(gain, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    n.connect(bp); bp.connect(g); g.connect(a.master);
+    n.start(t, Math.random() * 0.5); n.stop(t + decay + 0.02);
+  }
+  const bell = (a, t, m, gain) => {
+    const f = 440 * Math.pow(2, (m - 69) / 12);
+    tone(a, t, f, 'sine', gain, 1.4);
+    tone(a, t, f * 2.0, 'sine', gain * 0.3, 0.7);
+    tone(a, t, f * 3.01, 'sine', gain * 0.12, 0.35);
+  };
+  // A shake of sleigh bells: several jingles in quick succession, fading.
+  function shake(a, t, count){
+    for (let k = 0; k < count; k++){
+      const tt = t + k * 0.055 + Math.random() * 0.015, v = 1 - k / (count + 2);
+      [2600, 3300, 4200, 5200, 6500, 7900].forEach(f => tone(a, tt + Math.random() * 0.02, f * (0.96 + Math.random() * 0.08), 'triangle', 0.012 * v, 0.1 + Math.random() * 0.12));
+    }
+  }
+  return {
+    set on(v){ on = v; },
+    get on(){ return on; },
+    // Ball lifted: a soft wooden tock.
+    lift(){ const a = A(); if (!a) return; tone(a, a.ctx.currentTime, 820, 'sine', 0.05, 0.07, 560); },
+    // Ball lands: a small glass clink that rises in pitch as the tube fills.
+    clink(fill){
+      const a = A(); if (!a) return;
+      const t = a.ctx.currentTime, f = (1500 + fill * 420) * (0.98 + Math.random() * 0.04);
+      tone(a, t, f, 'sine', 0.07, 0.4);
+      tone(a, t, f * 2.76, 'sine', 0.03, 0.18);
+      tone(a, t, f * 5.4, 'sine', 0.012, 0.08);
+      puff(a, t, 5000, 1, 0.02, 0.01);
+    },
+    // Tube finished: the cork goes in with a soft pop (holiday: a little bell and a jingle).
+    cork(){
+      const a = A(); if (!a) return;
+      if (document.body.classList.contains('holiday')){
+        const t = a.ctx.currentTime + 0.1;
+        bell(a, t, 88, 0.05); shake(a, t, 3);
+        return;
+      }
+      const t = a.ctx.currentTime + 0.12;
+      puff(a, t, 900, 1.2, 0.12, 0.05);
+      tone(a, t, 520, 'sine', 0.1, 0.12, 190);
+    },
+    // Level solved: a rising bell arpeggio (holiday: sleigh bells ring it in).
+    win(){ const a = A(); if (!a) return; const t = a.ctx.currentTime + 0.1;
+      if (document.body.classList.contains('holiday')) shake(a, t, 12);
+      [79, 83, 86, 91].forEach((m, i) => bell(a, t + i * 0.12, m, 0.06)); },
+    // Bad move: a low, soft bonk.
+    bad(){ const a = A(); if (!a) return; const t = a.ctx.currentTime;
+      tone(a, t, 190, 'triangle', 0.08, 0.14, 120); },
+    // Hint shown: two gentle notes.
+    hint(){ const a = A(); if (!a) return; const t = a.ctx.currentTime;
+      bell(a, t, 86, 0.04); bell(a, t + 0.14, 91, 0.04); },
+    // Stuck: two falling notes.
+    stuck(){ const a = A(); if (!a) return; const t = a.ctx.currentTime;
+      bell(a, t, 74, 0.05); bell(a, t + 0.2, 69, 0.05); }
+  };
+})();
+
+const MILESTONES = {
+  46: 'Taller tubes from here: 5 balls each.',
+  51: 'New: hidden balls. Each one shows its color when it reaches the top of a tube.',
+  81: 'From here on, no extra tube. You get what you see.',
+  101: 'Taller tubes again: 6 balls each, and every buried ball starts hidden.',
+  151: 'Tougher shuffles from here on.',
+  201: 'The tallest tubes yet: 7 balls each.',
+  251: 'Master levels: the trickiest shuffles in the game.',
+  301: 'You finished all 300. These bonus levels stay at maximum difficulty.'
+};
+
+// Higher levels take a moment to build, so each is built once and kept,
+// and the next level is prepared in the background while the win card shows.
+const levelCache = new Map();
+function getLevel(level){
+  if (!levelCache.has(level)) levelCache.set(level, genLevel(level));
+  const g = levelCache.get(level);
+  return { tubes: g.tubes.map(t => t.map(o => ({ ...o }))), cap: g.cap, hidden: g.hidden.slice(), extra: g.extra };
+}
+function prepareLevel(level){ setTimeout(() => { try { getLevel(level); } catch(e){} }, 600); }
+function startLevel(level, isRestart){
+  const g = getLevel(level);
+  const all = new Set(g.tubes.flat().map(o => o.id));
+  g.hidden.forEach(i => all.delete(i));
+  S = { level, tubes: g.tubes, cap: g.cap, revealed: all, history: [], moves: 0,
+        selected: null, extraUsed: false, extraAllowed: g.extra, busy: 0, solved: false,
+        hintsLeft: players.cur.test ? Infinity : 3, hintsUsed: 0, stuckShown: false, plan: null };
+  clearHint();
+  players.cur.level = level; players.save();
+  render();
+  if (!isRestart && MILESTONES[level]) toast(MILESTONES[level]);
+}
+
+let toastTimer;
+function toast(msg){
+  const t = el('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 4200);
+}
+
+const tubeDone = t => t.length === S.cap && uniform(cols(t));
+const canMove = (i, j) => {
+  const a = S.tubes[i], b = S.tubes[j];
+  return a.length && b.length < S.cap && (!b.length || b[b.length - 1].c === a[a.length - 1].c);
+};
+
+// Reveal the top ball of every tube; returns ids that were newly revealed.
+function revealTops(){
+  const fresh = new Set();
+  S.tubes.forEach(t => {
+    if (!t.length) return;
+    const id = t[t.length - 1].id;
+    if (!S.revealed.has(id)){ S.revealed.add(id); fresh.add(id); }
+  });
+  return fresh;
+}
+
+const slotEl = i => board.querySelector(`[data-i="${i}"]`);
+const ballsOf = i => { const s = slotEl(i); return s ? [...s.querySelectorAll('.ball')] : []; };
+function setLift(i, on){
+  const bs = ballsOf(i);
+  if (bs.length) bs[bs.length - 1].classList.toggle('lift', on);
+}
+
+function tap(i){
+  if (S.solved || S.busy) return;
+  const t = S.tubes[i];
+  if (S.selected === null){
+    if (t.length && !tubeDone(t)){ S.selected = i; setLift(i, true); Sfx.lift(); }
+    else shake(i);
+    return;
+  }
+  if (S.selected === i){ S.selected = null; setLift(i, false); clearHint(); return; }
+  const from = S.selected;
+  if (!canMove(from, i)){
+    setLift(from, false); S.selected = null;
+    // Tapping another movable tube switches the selection instead of just failing.
+    if (t.length && !tubeDone(t)){ S.selected = i; setLift(i, true); Sfx.lift(); }
+    else shake(i);
+    return;
+  }
+  clearHint();
+  doMove(from, i);
+}
+
+function doMove(from, to){
+  const src = S.tubes[from], dst = S.tubes[to];
+  const n = Math.min(topRun(cols(src)), S.cap - dst.length);
+  const b = parseFloat(board.style.getPropertyValue('--b'));
+  const srcEls = ballsOf(from).slice(-n);
+  const srcRects = srcEls.map(e => e.getBoundingClientRect());
+  const srcTube = slotEl(from).querySelector('.tube').getBoundingClientRect();
+
+  S.history.push({ tubes: S.tubes.map(x => x.slice()), moves: S.moves });
+  const base = dst.length;
+  for (let m = 0; m < n; m++){
+    const o = src.pop();
+    S.revealed.add(o.id);   // a hidden ball that moves with its run shows itself
+    dst.push(o);
+  }
+  S.moves++;
+  S.selected = null;
+  const fresh = revealTops();
+
+  if (reduceMotion.matches){
+    render({ reveal: fresh });
+    Sfx.clink(dst.length / S.cap);
+    afterMove(to);
+    return;
+  }
+
+  render({ ghost: { tube: to, from: base }, reveal: fresh });
+  const dstEls = ballsOf(to).slice(base, base + n);
+  const dstTube = slotEl(to).querySelector('.tube').getBoundingClientRect();
+  const peak = Math.min(srcTube.top, dstTube.top, srcRects[n - 1].top) - b * 0.9;
+
+  S.busy = n;
+  updateControls();
+  for (let m = 0; m < n; m++){
+    const o = dst[base + m];
+    fly(o, srcRects[n - 1 - m], dstEls[m].getBoundingClientRect(), peak, m * 55, b).then(() => {
+      const d = dstEls[m];
+      if (d.isConnected){ d.classList.remove('ghost'); d.classList.add('land'); }
+      Sfx.clink((base + m + 1) / S.cap);
+      if (--S.busy === 0){ updateControls(); afterMove(to); }
+    });
+  }
+}
+
+// Fly a copy of the ball along a smooth arc from one tube to another.
+function fly(o, a, d, peak, delay, b){
+  const c = document.createElement('div');
+  c.className = `ball fly c${o.c}`;
+  c.style.cssText = `--c:${COLORS[o.c][0]};--b:${b}px;left:${a.left}px;top:${a.top}px;width:${a.width}px;height:${a.height}px;font-size:${b * 0.42}px`;
+  c.innerHTML = `<span class="sym">${COLORS[o.c][1]}</span>`;
+  document.body.appendChild(c);
+  const dx = d.left - a.left, dy = d.top - a.top, py = peak - a.top;
+  const bez = (p0, p1, p2, p3, t) => {
+    const u = 1 - t;
+    return u*u*u*p0 + 3*u*u*t*p1 + 3*u*t*t*p2 + t*t*t*p3;
+  };
+  const frames = [];
+  const steps = 20;
+  for (let s = 0; s <= steps; s++){
+    const t = s / steps;
+    frames.push({ transform: `translate(${bez(0, 0, dx, dx, t)}px, ${bez(0, py, py, dy, t)}px)` });
+  }
+  const dist = Math.abs(dx) + Math.abs(py) + Math.abs(dy - py);
+  const duration = Math.max(300, Math.min(560, 220 + dist * 0.4));
+  const anim = c.animate(frames, { duration, delay, easing: 'cubic-bezier(.45,.05,.3,1)', fill: 'both' });
+  return anim.finished.catch(() => {}).then(() => c.remove());
+}
+
+function afterMove(to){
+  const won = isWon(S.tubes.map(cols), S.cap);
+  if (tubeDone(S.tubes[to])) Sfx.cork();
+  if (!won){
+    if (tubeDone(S.tubes[to])) buzz(BUZZ.tube);
+    checkStuck();
+    return;
+  }
+  buzz(BUZZ.level);
+  setTimeout(() => Sfx.win(), 250);
+  S.solved = true;
+  updateControls();
+  const prevBest = progress.best(S.level);
+  progress.solved(S.level, S.moves, S.hintsUsed > 0);
+  prepareLevel(S.level + 1);
+  players.cur.level = S.level + 1; players.save();
+  setTimeout(() => {
+    const moves = `${S.moves} ${S.moves === 1 ? 'move' : 'moves'}`;
+    if (S.level === MAX_LEVEL){
+      el('winTitle').textContent = `All ${MAX_LEVEL} levels solved`;
+      el('winText').textContent = `Level ${MAX_LEVEL} in ${moves}. Bonus levels are next if you want more.`;
+      el('next').textContent = 'Keep playing';
+    } else {
+      el('winTitle').textContent = `Level ${S.level} solved`;
+      const hinted = S.hintsUsed ? ` with ${S.hintsUsed} ${S.hintsUsed === 1 ? 'hint' : 'hints'}` : '';
+      el('winText').textContent = S.hintsUsed
+        ? `${moves}${hinted}. Solve it without hints to set a best score.`
+        : prevBest === undefined ? moves
+        : S.moves < prevBest ? `${moves}, a new best (was ${prevBest})` : `${moves} (best: ${prevBest})`;
+      el('next').textContent = 'Next level';
+    }
+    openModal('win');
+    el('next').focus();
+  }, 450);
+}
+
+function shake(i){
+  const s = slotEl(i);
+  if (!s) return;
+  buzz(BUZZ.bad);
+  Sfx.bad();
+  s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake');
+  setTimeout(() => s.classList.remove('shake'), 320);
+}
+
+// ---- hints and dead-end warnings ----
+const colorState = () => S.tubes.map(cols);
+let hintTimer = null;
+function clearHint(){
+  clearTimeout(hintTimer);
+  board.querySelectorAll('.hint-target').forEach(e => e.classList.remove('hint-target'));
+}
+// After each move, quietly check whether the position can still be finished.
+// Only warn when that's certain: the search must have tried every possibility.
+let stuckToken = 0;
+function checkStuck(){
+  const token = ++stuckToken, movesAt = S.moves;
+  setTimeout(() => {
+    if (token !== stuckToken || S.solved || S.moves !== movesAt) return;
+    const state = colorState();
+    const anyMove = state.some((a, i) => a.length && !(a.length === S.cap && uniform(a)) &&
+      state.some((b, j) => i !== j && b.length < S.cap && (!b.length || b[b.length - 1] === a[a.length - 1])));
+    let msg = null;
+    if (!anyMove) msg = 'No moves left. Undo a move or restart.';
+    else {
+      const lim = S.cap >= 6 ? 12000 : 40000;
+      const r = solvePath(state, S.cap, lim);
+      if (r.status === 'none'){
+        const withExtra = S.extraAllowed && !S.extraUsed && solvePath(state.concat([[]]), S.cap, lim).status === 'solved';
+        msg = withExtra ? "You'll need the extra tube from here. Tap Add tube."
+                        : "This can't be finished from here. Undo a few moves or restart.";
+      }
+    }
+    if (msg && !S.stuckShown){
+      S.stuckShown = true;
+      toast(msg);
+      Sfx.stuck();
+      const b = el(msg.includes('Add tube') ? 'extra' : 'undo');
+      b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge');
+    } else if (!msg) S.stuckShown = false;
+  }, 60);
+}
+function showHint(){
+  if (!S || S.busy || S.solved) return;
+  if (S.hintsLeft <= 0){ toast('No hints left on this level. Restart to get 3 more.'); return; }
+  // Keep following one plan while the player follows it, so hints never go in circles.
+  const now = JSON.stringify(colorState());
+  let r;
+  if (S.plan && S.plan.keys[S.plan.step] === now) r = { status: 'solved', path: S.plan.path.slice(S.plan.step) };
+  else {
+    r = solvePath(colorState(), S.cap);
+    if (r.status === 'solved'){
+      const keys = [], x = colorState();
+      r.path.forEach(([i, j]) => {
+        keys.push(JSON.stringify(x));
+        const n = Math.min(topRun(x[i]), S.cap - x[j].length);
+        for (let m = 0; m < n; m++) x[j].push(x[i].pop());
+      });
+      S.plan = { path: r.path, keys, step: 0 };
+    } else S.plan = null;
+  }
+  if (r.status !== 'solved'){
+    if (r.status === 'none' && S.extraAllowed && !S.extraUsed && solvePath(colorState().concat([[]]), S.cap).status === 'solved')
+      toast("There's no way through without the extra tube. Tap Add tube.");
+    else toast(r.status === 'none'
+      ? "This can't be finished from here. Undo a few moves or restart."
+      : "I couldn't find a hint from here. Try undoing a move or two.");
+    Sfx.stuck();
+    return;               // failed hints don't use one up
+  }
+  const [from, to] = r.path[0];
+  S.plan.step = S.plan.path.length - r.path.length + 1;
+  S.hintsLeft--; S.hintsUsed++;
+  if (S.selected !== null) setLift(S.selected, false);
+  clearHint();
+  S.selected = from; setLift(from, true);
+  const target = slotEl(to);
+  if (target) target.classList.add('hint-target');
+  hintTimer = setTimeout(clearHint, 4000);
+  Sfx.hint();
+  updateControls();
+}
+
+const BOW = `<div class="bow"><svg viewBox="0 0 100 66" aria-hidden="true">
+  <path d="M50 30 C 30 4, 4 8, 9 28 C 13 44, 36 41, 50 32 Z" fill="url(#bowGold)"/>
+  <path d="M50 30 C 70 4, 96 8, 91 28 C 87 44, 64 41, 50 32 Z" fill="url(#bowGold)"/>
+  <path d="M48 30 C 34 14, 16 15, 18 27 C 21 36, 36 34, 48 31 Z" fill="#6f5210" opacity=".35"/>
+  <path d="M52 30 C 66 14, 84 15, 82 27 C 79 36, 64 34, 52 31 Z" fill="#6f5210" opacity=".35"/>
+  <path d="M47 34 L 31 63 L 39 60 L 43 65 L 50 36 Z" fill="url(#bowGold)"/>
+  <path d="M53 34 L 69 63 L 61 60 L 57 65 L 50 36 Z" fill="url(#bowGold)"/>
+  <ellipse cx="50" cy="32" rx="8" ry="7" fill="#e6bd55" stroke="#8e6a1c" stroke-width="1.5"/>
+</svg></div>`;
+
+function render(opts = {}){
+  const n = S.tubes.length, cap = S.cap;
+  const rows = n <= 6 ? 1 : 2;
+  const perRow = Math.ceil(n / rows);
+  const W = Math.min(board.clientWidth - 24, 880);
+  const H = board.clientHeight - 16;
+  const byW = (W - 12 * perRow) / (perRow + 0.45 * (perRow - 1));
+  const byH = (H - 11 * rows) / (rows * (1.3 + cap) + (rows - 1) * 0.6);
+  const b = Math.max(16, Math.floor(Math.min(byW, byH, 56)));
+  const st = board.style;
+  st.setProperty('--b', b + 'px');
+  st.setProperty('--tw', (b + 14) + 'px');
+  st.setProperty('--th', (cap * b + 11) + 'px');
+  st.setProperty('--lift', Math.round(b * 1.3) + 'px');
+  st.setProperty('--gap', Math.round(b * 0.45) + 'px');
+  st.setProperty('--rowgap', Math.round(b * 0.6) + 'px');
+
+  const reveal = opts.reveal || new Set();
+  let html = '<div class="rows">';
+  for (let r = 0; r < rows; r++){
+    html += '<div class="row">';
+    for (let i = r * perRow; i < Math.min(n, (r + 1) * perRow); i++){
+      const t = S.tubes[i], done = tubeDone(t);
+      html += `<button class="slot" data-i="${i}" aria-label="Tube ${i + 1}, ${t.length} of ${cap} filled${done ? ', complete' : ''}"><div class="tube${done ? ' done' : ''}">`;
+      t.forEach((o, k) => {
+        const hid = !S.revealed.has(o.id);
+        let cls = (hid ? ' hidden' : ` c${o.c}`), style = `--c:${hid ? 'var(--hid)' : COLORS[o.c][0]}`;
+        if (k === t.length - 1){
+          style += `;--up:${-((cap - t.length) * b + b * 0.9 + 3)}px`;
+          if (S.selected === i) cls += ' lift';
+        }
+        if (opts.ghost && opts.ghost.tube === i && k >= opts.ghost.from) cls += ' ghost';
+        if (reveal.has(o.id)) cls += ' reveal';
+        html += `<div class="ball${cls}" style="${style}"><span class="sym">${COLORS[o.c][1]}</span><span class="q">?</span></div>`;
+      });
+      if (done) html += document.body.classList.contains('holiday') ? BOW : '<div class="cork"></div>';
+      html += '</div></button>';
+    }
+    html += '</div>';
+  }
+  board.innerHTML = html + '</div>';
+
+  el('who').textContent = '👤 ' + players.cur.name;
+  el('lvl').textContent = S.level <= MAX_LEVEL ? `Level ${S.level}/${MAX_LEVEL}` : `Bonus ${S.level - MAX_LEVEL}`;
+  el('moves').textContent = `${S.moves} ${S.moves === 1 ? 'move' : 'moves'}`;
+  updateControls();
+}
+
+function updateControls(){
+  el('undo').disabled = !S.history.length || S.solved || S.busy > 0;
+  const h = el('hint');
+  h.textContent = S.hintsLeft === Infinity ? 'Hint' : `Hint (${S.hintsLeft})`;
+  h.disabled = S.solved || S.busy > 0 || S.hintsLeft <= 0;
+  el('restart').disabled = S.busy > 0;
+  el('levels').disabled = S.busy > 0;
+  el('settings').disabled = S.busy > 0;
+  const x = el('extra');
+  x.textContent = 'Add tube';
+  x.title = S.extraAllowed ? '' : 'No extra tube on this level';
+  x.disabled = !S.extraAllowed || S.extraUsed || S.solved || S.busy > 0;
+}
+
+let triedLock = false;
+board.addEventListener('pointerdown', () => {
+  if (triedLock) return;
+  triedLock = true;
+  try { screen.orientation && screen.orientation.lock && screen.orientation.lock('portrait').catch(() => {}); } catch(e){}
+}, { once: true });
+board.addEventListener('click', e => {
+  const s = e.target.closest('.slot');
+  if (s) tap(+s.dataset.i);
+});
+el('hint').onclick = showHint;
+el('undo').onclick = () => {
+  if (S.busy) return;
+  const h = S.history.pop();
+  if (!h) return;
+  clearHint(); stuckToken++; S.stuckShown = false;
+  S.tubes = h.tubes; S.moves = h.moves; S.selected = null;
+  const fresh = revealTops();   // anything you've already seen stays seen
+  render({ reveal: fresh });
+};
+el('restart').onclick = () => { if (!S.busy) startLevel(S.level, true); };
+el('extra').onclick = () => {
+  if (S.extraUsed || !S.extraAllowed || S.busy) return;
+  S.extraUsed = true;
+  clearHint(); stuckToken++; S.stuckShown = false;
+  S.tubes.push([]);
+  S.history.forEach(h => h.tubes.push([]));
+  S.selected = null;
+  render();
+};
+// ---- settings (each player keeps their own) ----
+const shared = p => !p.test;     // the tester's choices don't become the default for others
+function setSymbols(on){
+  document.body.classList.toggle('symbols', on);
+  el('optSymbols').checked = on;
+  if (players.cur){ players.cur.symbols = on; players.save(); }
+}
+function setMusic(on){
+  on ? Music.start() : Music.stop();
+  el('optMusic').checked = on;
+  if (players.cur){ players.cur.music = on; if (shared(players.cur)) players.data.music = on; players.save(); }
+}
+function setSounds(on, quiet){
+  Sfx.on = on;
+  el('optSounds').checked = on;
+  if (players.cur){ players.cur.sounds = on; if (shared(players.cur)) players.data.sounds = on; players.save(); }
+  if (on && !quiet) Sfx.lift();
+}
+function setVibe(on, quiet){
+  vibeOn = on;
+  el('optVibe').checked = on;
+  if (players.cur){ players.cur.vibe = on; players.save(); }
+  if (on && !quiet) buzz(40);
+}
+// ---- holiday theme: on in December unless a player has chosen otherwise ----
+const Snow = (() => {
+  const cv = el('snow'), cx = cv.getContext('2d');
+  let flakes = [], raf = 0, last = 0, running = false;
+  function size(){
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.round(Math.min(110, innerWidth * innerHeight / 9000));
+    while (flakes.length < n) flakes.push(newFlake(true));
+    if (flakes.length > n) flakes.length = n;
+  }
+  function newFlake(anywhere){
+    const r = 0.8 + Math.random() * 2.4;
+    return { x: Math.random() * innerWidth, y: anywhere ? Math.random() * innerHeight * 0.85 : -6, r,
+             v: 10 + r * 9 + Math.random() * 8, sway: Math.random() * 6.28, sw: 0.4 + Math.random() * 0.8,
+             a: 0.35 + Math.random() * 0.5 };
+  }
+  function frame(t){
+    if (!running) return;
+    const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
+    cx.clearRect(0, 0, innerWidth, innerHeight);
+    const nav = document.querySelector('nav');
+    const floor = nav ? nav.getBoundingClientRect().top : innerHeight;
+    cx.save(); cx.beginPath(); cx.rect(0, 0, innerWidth, floor); cx.clip();
+    for (const f of flakes){
+      f.y += f.v * dt; f.sway += f.sw * dt; f.x += Math.sin(f.sway) * 12 * dt;
+      if (f.y > floor + 6){ Object.assign(f, newFlake(false)); }
+      cx.globalAlpha = f.a; cx.beginPath(); cx.arc(f.x, f.y, f.r, 0, 6.2832); cx.fillStyle = '#fff'; cx.fill();
+    }
+    cx.restore();
+    raf = requestAnimationFrame(frame);
+  }
+  const ok = () => !reduceMotion.matches && !document.hidden;
+  return {
+    start(){ if (running || !ok()) return; running = true; size(); last = 0; raf = requestAnimationFrame(frame); },
+    stop(){ running = false; cancelAnimationFrame(raf); cx.clearRect(0, 0, cv.width, cv.height); },
+    resize(){ if (running) size(); }
+  };
+})();
+window.addEventListener('resize', () => Snow.resize());
+document.addEventListener('visibilitychange', () => {
+  if (!document.body.classList.contains('holiday')) return;
+  document.hidden ? Snow.stop() : Snow.start();
+});
+const holidayDefault = () => new Date().getMonth() === 11;
+function applyTheme(holiday){
+  document.body.classList.toggle('holiday', holiday);
+  el('optHoliday').checked = holiday;
+  holiday ? Snow.start() : Snow.stop();
+  Music.setSuite(holiday ? 'holiday' : 'classic');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = holiday ? '#0d1828' : '#2f6f8f';
+  if (S) render();
+}
+el('optHoliday').onchange = e => {
+  if (players.cur){ players.cur.holiday = e.target.checked; players.save(); }
+  applyTheme(e.target.checked);
+};
+el('optMusic').onchange = e => setMusic(e.target.checked);
+el('optSounds').onchange = e => setSounds(e.target.checked);
+el('optVibe').onchange = e => setVibe(e.target.checked);
+el('optSymbols').onchange = e => setSymbols(e.target.checked);
+el('settings').onclick = () => { if (!S || !S.busy) openModal('set'); };
+el('setClose').onclick = () => closeModal();
+el('setWho').onclick = () => showStart(true);   // swaps panels without leaving the back-button entry
+el('set').addEventListener('click', e => { if (e.target === el('set')) closeModal(); });
+el('next').onclick = () => { closeModal(); startLevel(S.level + 1); };
+
+// Opening a panel adds a history entry, so Android's back button closes the
+// panel instead of leaving the game. Closing any other way removes that entry.
+let modal = null;
+function openModal(id){
+  if (modal && modal !== id) el(modal).hidden = true;
+  const had = modal !== null;
+  modal = id;
+  el(id).hidden = false;
+  if (!had){ try { history.pushState({ tubeSortModal: true }, ''); } catch(e){} }
+}
+function closeModal(){
+  if (!modal) return;
+  el(modal).hidden = true;
+  modal = null;
+  try { if (history.state && history.state.tubeSortModal) history.back(); } catch(e){}
+}
+window.addEventListener('popstate', () => {
+  if (modal){ el(modal).hidden = true; modal = null; }
+});
+
+function openPicker(){
+  if (S.busy) return;
+  const top = progress.top;
+  const last = Math.max(MAX_LEVEL, top);
+  const sections = { 1: '4-ball tubes', 46: '5-ball tubes', 51: 'Hidden balls', 81: 'No extra tube', 101: '6-ball tubes',
+                     151: 'Tougher shuffles', 201: '7-ball tubes', 251: 'Master levels', 301: 'Bonus levels' };
+  let html = '';
+  for (let l = 1; l <= last; l++){
+    if (sections[l]) html += `<div class="sec">${sections[l]}</div>`;
+    const best = progress.best(l);
+    const passed = best !== undefined || l < top;
+    const cls = ['lv', passed ? 'solved' : '', l === S.level ? 'current' : ''].join(' ');
+    const label = l > MAX_LEVEL ? `B${l - MAX_LEVEL}` : l;
+    const aria = `Level ${l}${best !== undefined ? `, solved in ${best} moves` : ''}${l > top ? ', locked' : ''}`;
+    html += `<button class="${cls}" data-l="${l}" aria-label="${aria}" ${l > top ? 'disabled' : ''}>${l > top ? '🔒' : label}</button>`;
+  }
+  el('pickGrid').innerHTML = html;
+  el('pickNote').textContent = players.cur.test ? 'Test mode: every level is open.'
+    : `Levels unlock as you solve them. You've reached level ${Math.min(top, last)}.`;
+  openModal('pick');
+  const cur = el('pickGrid').querySelector('.current') || el('pickGrid').querySelector('.lv');
+  cur.scrollIntoView({ block: 'center' });
+  cur.focus();
+}
+el('levels').onclick = openPicker;
+el('pickClose').onclick = () => closeModal();
+el('pick').addEventListener('click', e => {
+  if (e.target === el('pick')) { closeModal(); return; }
+  const b = e.target.closest('.lv');
+  if (b && !b.disabled){ closeModal(); startLevel(+b.dataset.l); }
+});
+el('win').addEventListener('click', e => { if (e.target === el('win')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (modal !== 'start' || players.cur)) closeModal(); });
+window.addEventListener('resize', () => S && !S.busy && render());
+
+// ---- first screen: pick or add a player, choose music ----
+const esc = t => t.replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+function showStart(fromGame){
+  el('saveWarn').hidden = store.ok;
+  let list = players.sorted();
+  if (GK_PLAYER){ const gk = GK_PLAYER.toLowerCase(); list = list.filter(([k]) => k === gk); }
+  el('startSub').textContent = GK_PLAYER ? `Hi, ${GK_PLAYER}! Tap your name to play.` : list.length ? "Who's playing?" : 'Welcome. What should we call you?';
+  el('plist').innerHTML = list.map(([k, p]) => `<div class="prow">
+      <button class="pbtn" data-k="${esc(k)}"><span class="nm">${esc(p.name)}</span><small>${p.level > MAX_LEVEL ? 'Bonus ' + (p.level - MAX_LEVEL) : 'Level ' + p.level}</small></button>
+      <button class="pdel" data-del="${esc(k)}" aria-label="Remove ${esc(p.name)}">✕</button>
+    </div>`).join('') || (GK_PLAYER ? `<div class="prow"><button class="pbtn" data-n="${esc(GK_PLAYER)}"><span class="nm">${esc(GK_PLAYER)}</span><small>Level 1</small></button></div>` : '');
+  if (GK_PLAYER){ el('plist').querySelectorAll('.pdel').forEach(b => b.remove()); document.querySelector('#start .newp').style.display = 'none'; }
+  el('nameInput').value = '';
+  el('nameInput').placeholder = list.length ? 'New player' : 'Your name';
+  el('startErr').textContent = '';
+  el('musicToggle').checked = players.cur ? Music.playing : players.data.music !== false;
+  el('soundsToggle').checked = players.cur ? Sfx.on : players.data.sounds !== false;
+  if (fromGame) openModal('start'); else el('start').hidden = false;
+  if (!list.length && !GK_PLAYER) setTimeout(() => el('nameInput').focus(), 50);
+}
+function play(name){
+  const music = el('musicToggle').checked, sounds = el('soundsToggle').checked;
+  const p = players.use(name, music, sounds);
+  if (modal === 'start') closeModal(); else el('start').hidden = true;
+  setSymbols(!!p.symbols);
+  applyTheme(p.holiday === undefined ? holidayDefault() : p.holiday);
+  setMusic(music);
+  setSounds(sounds, true);
+  setVibe(p.vibe !== false, true);
+  startLevel(Math.max(1, p.level || 1));
+}
+el('plist').addEventListener('click', e => {
+  const del = e.target.closest('.pdel');
+  if (del){
+    // Two taps to remove, so a stray tap can't erase someone's progress.
+    if (!del.classList.contains('confirm')){
+      el('plist').querySelectorAll('.pdel.confirm').forEach(b => { b.classList.remove('confirm'); b.textContent = '✕'; });
+      del.classList.add('confirm'); del.textContent = 'Remove?';
+      return;
+    }
+    const wasCurrent = players.cur && players.cur === players.data.list[del.dataset.del];
+    players.remove(del.dataset.del);
+    if (wasCurrent){ Music.stop(); if (modal === 'start'){ modal = null; try { history.back(); } catch(e){} } }
+    showStart(!!players.cur);
+    return;
+  }
+  const b = e.target.closest('.pbtn');
+  if (b) play(b.dataset.n || players.data.list[b.dataset.k].name);
+});
+function submitName(){
+  const name = el('nameInput').value.replace(/\s+/g, ' ').trim();
+  if (!name){ el('startErr').textContent = 'Type a name first.'; el('nameInput').focus(); return; }
+  play(name);
+}
+el('startBtn').onclick = submitName;
+el('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitName(); });
+el('musicToggle').addEventListener('change', () => { if (players.cur) setMusic(el('musicToggle').checked); });
+el('soundsToggle').addEventListener('change', () => { if (players.cur) setSounds(el('soundsToggle').checked); });
+el('who').onclick = () => { if (!S || !S.busy) showStart(true); };
+showStart(false);
+
+// Grandkid Games: button back to the menu
+(function(){ var a = gkHomeLink(); var c = document.querySelector('#start .startcard'); if (a && c){ var w = document.createElement('div'); w.style.textAlign = 'center'; w.appendChild(a); c.appendChild(w); } })();
+</script>
+</body>
+</html>
