@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14161c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Joe's Arcade">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Joe's Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14161c; --panel:#1d2029; --panel-2:#252935; --line:#323746; --text:#ecebe6; --muted:#9a9eab;
+  --amber:#ffb22e; --amber-ink:#1a1405; --danger:#ff5d73; --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:"Space Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);
+  background:var(--bg) linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/100% 4px;
+  padding:calc(env(safe-area-inset-top,0px) + 20px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);
+  -webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;
+}
+main{max-width:620px;margin:0 auto}
+button,input{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.logo{font-family:"Space Mono",ui-monospace,Menlo,monospace;font-weight:700;font-size:clamp(1.5rem,7vw,2rem);letter-spacing:.06em;text-transform:uppercase;line-height:1}
+.logo i{font-style:normal;color:var(--amber)}
+.tag{font-size:.8rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+h2{font-size:1.35rem;font-weight:600;margin-bottom:14px}
+.screen[hidden]{display:none}
+
+/* Who's playing */
+.players{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:22px}
+@media (min-width:520px){.players{grid-template-columns:1fr 1fr}}
+.player{display:flex;align-items:stretch;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.player.last{border-color:var(--amber)}
+.player .go{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:64px;text-align:left}
+.player .go:hover{background:var(--panel-2)}
+.av{flex:none;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:1.1rem;background:var(--panel-2);color:var(--amber);border:1px solid var(--line)}
+.player.last .av{background:var(--amber);color:var(--amber-ink);border-color:var(--amber)}
+.player .nm{display:block;font-size:1.1rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player small{display:block;font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+.player .x{flex:none;width:48px;color:var(--muted);font-size:1.15rem;border-left:1px solid var(--line)}
+.player .x:hover{color:var(--danger);background:var(--panel-2)}
+
+.newp{padding:16px;border-radius:var(--r);background:var(--panel);border:1px dashed var(--line)}
+.newp label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:8px;letter-spacing:.04em}
+.row{display:flex;gap:8px}
+.row input{flex:1;min-width:0;height:48px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:1.05rem}
+.row input::placeholder{color:#626776}
+.btn{height:48px;padding:0 18px;border-radius:10px;font-weight:600;background:var(--amber);color:var(--amber-ink);white-space:nowrap}
+.btn:active{filter:brightness(.9)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.danger{background:var(--danger);color:#1c0509}
+.err{min-height:1.2em;margin-top:8px;font-size:.85rem;color:var(--danger)}
+
+/* Games */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.bar .who{display:flex;align-items:center;gap:10px;min-width:0}
+.bar .who .av{background:var(--amber);color:var(--amber-ink);border-color:var(--amber)}
+.bar .who b{font-size:1.15rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .who small{display:block;font-size:.75rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.bar .btn{height:40px;padding:0 14px;font-size:.9rem}
+.games{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:520px){.games{grid-template-columns:1fr 1fr}}
+.game{display:flex;align-items:center;gap:14px;padding:12px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);color:inherit;text-decoration:none}
+.game:hover{background:var(--panel-2);border-color:#454b5d}
+.game .art{flex:none;width:64px;height:64px;border-radius:10px;background:#e9e6dc;display:grid;place-items:center}
+.game svg{width:52px;height:52px;display:block}
+.game b{display:block;font-size:1.05rem;font-weight:600}
+.game .what{display:block;font-size:.85rem;color:var(--muted);line-height:1.3;margin-top:2px}
+.note{margin-top:20px;font-size:.82rem;color:var(--muted)}
+
+dialog{margin:auto;max-width:min(380px,calc(100% - 32px));padding:20px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);color:var(--text)}
+dialog::backdrop{background:rgba(5,6,9,.7)}
+dialog h3{font-size:1.15rem;font-weight:600;margin-bottom:8px}
+dialog p{font-size:.92rem;color:var(--muted);line-height:1.45;margin-bottom:18px}
+dialog .row{justify-content:flex-end}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo">Joe's <i>Arcade</i></div>
+    <div class="tag">Insert coin</div>
+  </header>
+
+  <section class="screen" id="pick">
+    <h2>Who's playing?</h2>
+    <div class="players" id="players"></div>
+    <form class="newp" id="newForm" autocomplete="off">
+      <label for="newName">New player</label>
+      <div class="row">
+        <input id="newName" maxlength="20" placeholder="Type a name" enterkeyhint="go" autocapitalize="words" spellcheck="false">
+        <button class="btn" type="submit">Play</button>
+      </div>
+      <p class="err" id="err" role="alert"></p>
+    </form>
+  </section>
+
+  <section class="screen" id="games" hidden>
+    <div class="bar">
+      <div class="who" id="who"></div>
+      <button class="btn ghost" id="switch">Switch player</button>
+    </div>
+    <div class="games" id="gameList"></div>
+    <p class="note">Progress is saved per player, on this device only.</p>
+  </section>
+</main>
+
+<dialog id="confirm">
+  <h3 id="cTitle"></h3>
+  <p>This erases their saved progress in every arcade game on this device. It can't be undone. Grandkid Games saves aren't affected.</p>
+  <div class="row">
+    <button class="btn ghost" id="cNo">Cancel</button>
+    <button class="btn danger" id="cYes">Remove</button>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+// Players on this device, in the order they were first added, as first typed.
+// Kept apart from the grandkids' menu. Saves live under "arcade:<name>:" (see ../gk-save.js).
+const ROSTER_KEY = 'arcade-hub:players', LAST_KEY = 'arcade-hub:last', MAX_NAME = 20;
+
+// Same game folders as the grandkids' menu. Links add ?hub=arcade so each game saves to the arcade.
+const GAMES = [
+  { dir: 'tube-sort', name: 'Tube Sort', what: 'Color-sorting puzzles', art:
+    `<rect x="12" y="14" width="16" height="56" rx="8" fill="#e8f6ff" stroke="#2a2340" stroke-width="3"/>
+     <rect x="32" y="14" width="16" height="56" rx="8" fill="#e8f6ff" stroke="#2a2340" stroke-width="3"/>
+     <rect x="52" y="14" width="16" height="56" rx="8" fill="#e8f6ff" stroke="#2a2340" stroke-width="3"/>
+     <circle cx="20" cy="60" r="6" fill="#ff6b5b"/><circle cx="20" cy="47" r="6" fill="#ff6b5b"/><circle cx="20" cy="34" r="6" fill="#4f9cff"/>
+     <circle cx="40" cy="60" r="6" fill="#4f9cff"/><circle cx="40" cy="47" r="6" fill="#ffc83d"/>
+     <circle cx="60" cy="60" r="6" fill="#ffc83d"/><circle cx="60" cy="47" r="6" fill="#4f9cff"/><circle cx="60" cy="34" r="6" fill="#ff6b5b"/>` },
+  { dir: 'dragon-realms', name: 'Dragon Realms', what: 'Fly the realms, recover the eggs', art:
+    `<path d="M14 38 C22 22 34 22 36 34 C30 30 22 32 14 38 Z" fill="#ff9f43" stroke="#2a2340" stroke-width="3" stroke-linejoin="round"/>
+     <path d="M66 38 C58 22 46 22 44 34 C50 30 58 32 66 38 Z" fill="#ff9f43" stroke="#2a2340" stroke-width="3" stroke-linejoin="round"/>
+     <path d="M40 16 C52 16 60 36 60 50 C60 62 51 70 40 70 C29 70 20 62 20 50 C20 36 28 16 40 16 Z" fill="#fff4d6" stroke="#2a2340" stroke-width="3"/>
+     <circle cx="33" cy="40" r="4" fill="#6fbf5a"/><circle cx="46" cy="50" r="5" fill="#6fbf5a"/><circle cx="36" cy="58" r="3" fill="#6fbf5a"/>` },
+  { dir: 'wiener-dog', name: 'My Wiener Dog', what: 'Raise and walk a dachshund', art:
+    `<rect x="16" y="34" width="44" height="18" rx="9" fill="#b9733f" stroke="#2a2340" stroke-width="3"/>
+     <path d="M14 42 L6 36" stroke="#2a2340" stroke-width="4" stroke-linecap="round"/>
+     <rect x="20" y="48" width="6" height="14" rx="3" fill="#b9733f" stroke="#2a2340" stroke-width="3"/>
+     <rect x="48" y="48" width="6" height="14" rx="3" fill="#b9733f" stroke="#2a2340" stroke-width="3"/>
+     <ellipse cx="64" cy="34" rx="11" ry="9" fill="#b9733f" stroke="#2a2340" stroke-width="3"/>
+     <path d="M60 28 C54 32 54 42 58 46 C62 42 63 34 60 28 Z" fill="#7a4520" stroke="#2a2340" stroke-width="2.5" stroke-linejoin="round"/>
+     <circle cx="67" cy="32" r="2.2" fill="#2a2340"/><circle cx="75" cy="36" r="2.4" fill="#2a2340"/>` },
+  { dir: 'firework-beats', name: 'Firework Beats', what: 'Rhythm game, tap on the beat', art:
+    `<g stroke-width="4" stroke-linecap="round">
+       <path d="M40 8 V20" stroke="#ff6b5b"/><path d="M40 60 V72" stroke="#ffc83d"/>
+       <path d="M8 40 H20" stroke="#4f9cff"/><path d="M60 40 H72" stroke="#a4e06a"/>
+       <path d="M17 17 L25 25" stroke="#cfa6ff"/><path d="M63 17 L55 25" stroke="#ff6b5b"/>
+       <path d="M17 63 L25 55" stroke="#ffc83d"/><path d="M63 63 L55 55" stroke="#4f9cff"/></g>
+     <rect x="27" y="27" width="26" height="26" rx="7" fill="#ff8a7a" stroke="#2a2340" stroke-width="3"/>` },
+  { dir: 'fuzzy-feet', name: 'Fuzzy Feet', what: 'Sneak, fish, and dress up', art:
+    `<g fill="#6b4a32" stroke="#2a2340" stroke-width="2.5">
+       <ellipse cx="27" cy="52" rx="10" ry="14"/><circle cx="18" cy="33" r="4"/><circle cx="25" cy="29" r="4"/><circle cx="33" cy="31" r="4"/>
+       <ellipse cx="54" cy="40" rx="10" ry="14" transform="rotate(10 54 40)"/><circle cx="48" cy="21" r="4"/><circle cx="56" cy="18" r="4"/><circle cx="64" cy="21" r="4"/></g>` },
+  { dir: 'maze-kart-rally', name: 'Maze Kart Rally', what: '3D kart racing through mazes', art:
+    `<rect x="10" y="10" width="60" height="60" rx="10" fill="#e9dcc2" stroke="#2a2340" stroke-width="3"/>
+     <path d="M24 10 V44 H44 M56 22 V58 H24 M10 56 H14 M44 22 V32" fill="none" stroke="#2a2340" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+     <rect x="29" y="27" width="10" height="7" rx="2.5" fill="#ff6b5b" stroke="#2a2340" stroke-width="2"/>
+     <path d="M62 62 L62 52 L70 55 L62 58" fill="#ffc83d" stroke="#2a2340" stroke-width="2" stroke-linejoin="round"/>` }
+];
+
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Colons are dropped because they separate the parts of a save key (same rule as ../gk-save.js).
+const clean = n => String(n || '').replace(/:/g, '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME);
+const same = (a, b) => a.toLowerCase() === b.toLowerCase();
+const initial = n => esc(n.charAt(0).toUpperCase());
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { } }
+};
+function roster() {
+  try { const r = JSON.parse(store.get(ROSTER_KEY) || '[]'); return Array.isArray(r) ? r.filter(n => typeof n === 'string' && clean(n)) : []; } catch (e) { return []; }
+}
+const saveRoster = r => store.set(ROSTER_KEY, JSON.stringify(r));
+const findName = n => roster().find(x => same(x, n)) || '';
+const lastPlayer = () => findName(clean(store.get(LAST_KEY)));
+
+// Adds the name if it's new and returns the spelling first used on this device.
+function usePlayer(raw) {
+  const n = clean(raw);
+  if (!n) return '';
+  const r = roster(), had = r.find(x => same(x, n));
+  if (!had) { r.push(n); saveRoster(r); }
+  store.set(LAST_KEY, had || n);
+  return had || n;
+}
+
+// Removes the name and every arcade save that belongs to it.
+function removePlayer(name) {
+  saveRoster(roster().filter(x => !same(x, name)));
+  if (same(clean(store.get(LAST_KEY)), name)) store.del(LAST_KEY);
+  const prefix = 'arcade:' + name.toLowerCase() + ':';
+  try {
+    const doomed = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(prefix)) doomed.push(k); }
+    doomed.forEach(k => store.del(k));
+  } catch (e) { }
+}
+
+function showPick() {
+  const last = lastPlayer();
+  // The last player comes first; everyone else stays in the order they were added.
+  const list = roster().sort((a, b) => (same(b, last) ? 1 : 0) - (same(a, last) ? 1 : 0));
+  $('players').innerHTML = list.map(n => {
+    const isLast = same(n, last);
+    return `<div class="player${isLast ? ' last' : ''}">
+      <button class="go" data-name="${esc(n)}"><span class="av" aria-hidden="true">${initial(n)}</span>
+        <span style="min-width:0"><span class="nm">${esc(n)}</span><small>${isLast ? 'Last played' : 'Saved on this device'}</small></span></button>
+      <button class="x" data-remove="${esc(n)}" aria-label="Remove ${esc(n)} from this device" title="Remove from this device">✕</button>
+    </div>`;
+  }).join('');
+  $('players').hidden = !list.length;
+  $('newName').value = ''; $('err').textContent = '';
+  $('games').hidden = true; $('pick').hidden = false;
+  try { history.replaceState(null, '', location.pathname); } catch (e) { }
+  if (!list.length) $('newName').focus();
+}
+
+function showGames(name) {
+  $('who').innerHTML = `<span class="av" aria-hidden="true">${initial(name)}</span><span style="min-width:0"><small>Player</small><b>${esc(name)}</b></span>`;
+  const q = '?player=' + encodeURIComponent(name);
+  $('gameList').innerHTML = GAMES.map(g =>
+    `<a class="game" href="../${g.dir}/index.html?hub=arcade&player=${encodeURIComponent(name)}"><span class="art"><svg viewBox="0 0 80 80" aria-hidden="true">${g.art}</svg></span><span><b>${esc(g.name)}</b><span class="what">${esc(g.what)}</span></span></a>`).join('');
+  $('pick').hidden = true; $('games').hidden = false;
+  try { history.replaceState(null, '', location.pathname + q); } catch (e) { }
+  window.scrollTo(0, 0);
+}
+
+$('players').addEventListener('click', e => {
+  const rm = e.target.closest('[data-remove]');
+  if (rm) { askRemove(rm.dataset.remove); return; }
+  const b = e.target.closest('[data-name]');
+  if (b) showGames(usePlayer(b.dataset.name));
+});
+$('newForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const n = usePlayer($('newName').value);
+  if (!n) { $('err').textContent = 'Type a name first.'; $('newName').focus(); return; }
+  showGames(n);
+});
+$('switch').addEventListener('click', showPick);
+
+let pending = '';
+function askRemove(name) {
+  pending = name;
+  $('cTitle').textContent = `Remove ${name}?`;
+  const d = $('confirm');
+  if (d.showModal) d.showModal();
+  else if (confirm(`Remove ${name}? This erases their arcade progress on this device.`)) { removePlayer(name); showPick(); }
+}
+$('cNo').addEventListener('click', () => $('confirm').close());
+$('cYes').addEventListener('click', () => { $('confirm').close(); if (pending) removePlayer(pending); pending = ''; showPick(); });
+
+// Coming back from a game keeps the same player. Opening the arcade fresh asks who's playing,
+// with the last player at the top.
+const fromLink = (() => { try { return clean(new URLSearchParams(location.search).get('player')); } catch (e) { return ''; } })();
+if (fromLink) showGames(usePlayer(fromLink));
+else showPick();
+
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => { }));
+</script>
+</body>
+</html>
