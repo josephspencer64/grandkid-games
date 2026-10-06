@@ -1,11 +1,11 @@
 // One offline cache for both menus (Grandkid Games and Joe's Arcade) and every game.
 // Bump VERSION whenever a file changes so phones pick up the new copy.
-const VERSION = 'games-v1';
+const VERSION = 'games-v2';
 const FILES = [
   './', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'gk-save.js',
   'arcade/', 'arcade/index.html', 'arcade/manifest.json', 'arcade/icon-192.png', 'arcade/icon-512.png',
   'tube-sort/index.html', 'dragon-realms/index.html', 'wiener-dog/index.html',
-  'firework-beats/index.html', 'fuzzy-feet/index.html', 'maze-kart-rally/index.html',
+  'firework-beats/index.html', 'fuzzy-feet/index.html', 'maze-kart-rally/index.html', 'asteroids/index.html',
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
 ];
 
