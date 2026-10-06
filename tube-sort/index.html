@@ -301,21 +301,8 @@ body.holiday .ctl:disabled{opacity:1;color:#5d6d80;border-color:rgba(210,228,248
   .ball,.ball.land,.ball.reveal,.cork,.slot.shake .tube,.toast{transition:none;animation:none}
 }
 </style>
-<!-- Grandkid Games: which grandkid is playing, passed in from the game menu as ?player=Name -->
-<script>
-var GK_PLAYER = (function () { try { var q = new URLSearchParams(location.search); return (q.get('player') || '').trim().slice(0, 14); } catch (e) { return ''; } })();
-// Save keys get the grandkid's name in front, so every grandkid has separate progress.
-function gkKey(k) { return GK_PLAYER ? 'gk:' + GK_PLAYER.toLowerCase() + ':' + k : k; }
-// A button back to the game menu. Only shown when the game was opened from the menu.
-function gkHomeLink(extraClass) {
-  if (!GK_PLAYER) return null;
-  var a = document.createElement('a');
-  a.href = '../index.html?player=' + encodeURIComponent(GK_PLAYER);
-  a.className = 'gk-home' + (extraClass ? ' ' + extraClass : '');
-  a.textContent = '\u{1F3E0} All games';
-  return a;
-}
-</script>
+<!-- Which menu opened this game (?hub=arcade) and who is playing (?player=Name). Save keys and the home button come from here. -->
+<script src="../gk-save.js"></script>
 <style>
 .gk-home{display:inline-flex;align-items:center;justify-content:center;gap:.4em;min-height:44px;padding:.55em 1.2em;margin:14px auto 0;border-radius:999px;
   background:#fff;color:#2a2340;border:3px solid #2a2340;box-shadow:0 4px 0 #2a2340;font:inherit;font-weight:700;font-size:1rem;line-height:1;text-decoration:none;
@@ -630,11 +617,13 @@ const BUZZ = { bad: [30, 50, 30], tube: 40, level: [60, 70, 140] };
 // ---- players: each name on this device keeps its own progress and settings ----
 const players = (() => {
   let data = null;
-  try { data = JSON.parse(store.get('tubesort-players') || 'null'); } catch(e){}
+  // Grandkid key is unchanged. Arcade players keep their own copy under their arcade key (see gk-save.js).
+  const PLAYERS_KEY = GK_ARCADE ? gkKey('tubesort-players') : 'tubesort-players';
+  try { data = JSON.parse(store.get(PLAYERS_KEY) || 'null'); } catch(e){}
   if (!data || typeof data !== 'object' || !data.list){
     data = { list: {}, last: null, music: true, legacy: null };
     // Carry over progress saved before names existed; the first player created inherits it.
-    const lvl = parseInt(store.get('tubesort-level'), 10);
+    const lvl = GK_ARCADE ? 0 : parseInt(store.get('tubesort-level'), 10);
     if (lvl){
       let best = {};
       try { best = JSON.parse(store.get('tubesort-best') || '{}') || {}; } catch(e){}
@@ -642,7 +631,7 @@ const players = (() => {
                       symbols: store.get('tubesort-symbols') === '1' };
     }
   }
-  const save = () => store.set('tubesort-players', JSON.stringify(data));
+  const save = () => store.set(PLAYERS_KEY, JSON.stringify(data));
   const key = name => name.trim().toLowerCase();
   // The tester is recognized by a fingerprint of the name, so the name itself
   // never appears in the page. The tester is never shown in the player list.
