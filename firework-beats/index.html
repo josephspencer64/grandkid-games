@@ -97,21 +97,8 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
 .primary{background:var(--yellow);color:#231d5a;border:0;border-radius:999px;font-weight:800;font-size:1.2rem;padding:11px}
 .btns .ghost{padding:9px;font-size:1.1rem}
 </style>
-<!-- Grandkid Games: which grandkid is playing, passed in from the game menu as ?player=Name -->
-<script>
-var GK_PLAYER = (function () { try { var q = new URLSearchParams(location.search); return (q.get('player') || '').trim().slice(0, 14); } catch (e) { return ''; } })();
-// Save keys get the grandkid's name in front, so every grandkid has separate progress.
-function gkKey(k) { return GK_PLAYER ? 'gk:' + GK_PLAYER.toLowerCase() + ':' + k : k; }
-// A button back to the game menu. Only shown when the game was opened from the menu.
-function gkHomeLink(extraClass) {
-  if (!GK_PLAYER) return null;
-  var a = document.createElement('a');
-  a.href = '../index.html?player=' + encodeURIComponent(GK_PLAYER);
-  a.className = 'gk-home' + (extraClass ? ' ' + extraClass : '');
-  a.textContent = '\u{1F3E0} All games';
-  return a;
-}
-</script>
+<!-- Which menu opened this game (?hub=arcade) and who is playing (?player=Name). Save keys and the home button come from here. -->
+<script src="../gk-save.js"></script>
 <style>
 .gk-home{display:inline-flex;align-items:center;justify-content:center;gap:.4em;min-height:44px;padding:.55em 1.2em;margin:14px auto 0;border-radius:999px;
   background:#fff;color:#2a2340;border:3px solid #2a2340;box-shadow:0 4px 0 #2a2340;font:inherit;font-weight:700;font-size:1rem;line-height:1;text-decoration:none;

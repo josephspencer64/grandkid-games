@@ -1,18 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><!-- Grandkid Games: which grandkid is playing, passed in from the game menu as ?player=Name -->
-<script>
-var GK_PLAYER = (function () { try { var q = new URLSearchParams(location.search); return (q.get('player') || '').trim().slice(0, 14); } catch (e) { return ''; } })();
-// Save keys get the grandkid's name in front, so every grandkid has separate progress.
-function gkKey(k) { return GK_PLAYER ? 'gk:' + GK_PLAYER.toLowerCase() + ':' + k : k; }
-// A button back to the game menu. Only shown when the game was opened from the menu.
-function gkHomeLink(extraClass) {
-  if (!GK_PLAYER) return null;
-  var a = document.createElement('a');
-  a.href = '../index.html?player=' + encodeURIComponent(GK_PLAYER);
-  a.className = 'gk-home' + (extraClass ? ' ' + extraClass : '');
-  a.textContent = '\u{1F3E0} All games';
-  return a;
-}
-</script>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><!-- Which menu opened this game (?hub=arcade) and who is playing (?player=Name). Save keys and the home button come from here. -->
+<script src="../gk-save.js"></script>
 <style>
 .gk-home{display:inline-flex;align-items:center;justify-content:center;gap:.4em;min-height:44px;padding:.55em 1.2em;margin:14px auto 0;border-radius:999px;
   background:#fff;color:#2a2340;border:3px solid #2a2340;box-shadow:0 4px 0 #2a2340;font:inherit;font-weight:700;font-size:1rem;line-height:1;text-decoration:none;
