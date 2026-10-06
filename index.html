@@ -158,6 +158,9 @@ $('switch').addEventListener('click', showPick);
 const fromLink = (() => { try { return (new URLSearchParams(location.search).get('player') || '').trim().slice(0, 14); } catch (e) { return ''; } })();
 if (fromLink) showGames(KIDS.find(k => k.toLowerCase() === fromLink.toLowerCase()) || fromLink);
 else showPick();
+
+// Works offline once opened (sw.js caches this menu and every game).
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
 </script>
 </body>
 </html>
